@@ -101,8 +101,7 @@ export function dailyFluxPerNode(tier: Tier, height: number, enabledInTier: numb
 // ---------------------------------------------------------------------------
 
 /**
- * Parallel assets: FLUX tokens on other chains (Kadena, Ethereum, BSC, Tron, Solana, Avalanche,
- * Algorand, Polygon, Base — 9 active as of Oct 2026). Each active asset pays an extra 10% of every
+ * Parallel assets: FLUX tokens on other chains (10 active by default). Each active asset pays an extra 10% of every
  * node payout, on its own chain. Rewards accrue until claimed manually (Zelcore → Fusion →
  * Parallel Mining Claim), and each claim costs a network fee. Flux's PoUW v2 paper projects them
  * mined out by about 2028.
@@ -117,7 +116,7 @@ export interface ParallelAssets {
 }
 
 export const PARALLEL_ASSET_SHARE = 0.1;
-export const DEFAULT_PARALLEL_ASSET_COUNT = 9;
+export const DEFAULT_PARALLEL_ASSET_COUNT = 10;
 /** Projected end used by default (start of 2028, per the PoUW v2 paper). Likely to come earlier. */
 export const DEFAULT_PARALLEL_ASSET_END = "2028-01-01";
 
