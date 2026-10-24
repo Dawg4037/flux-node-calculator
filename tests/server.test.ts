@@ -1,0 +1,198 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { buildApp } from "../server/app.ts";
+import type { Config } from "../server/config.ts";
+import type { LookupResponse, NetworkResponse, PriceResponse } from "../shared/api.ts";
+
+const ADDR = "t3c4EfxLoXXSRZCRnPRF3RpjPi9mBzF5yoJ";
+const OTHER = "t3c4EfxLoXXSRZCRnPRF3RpjPi9mBzF5yoK"; // shares a prefix, must be excluded
+const HEIGHT = 3_063_554;
+
+const config: Config = {
+  port: 0,
+  host: "127.0.0.1",
+  fluxApiBaseUrl: "https://flux.test",
+  coingeckoApiKey: "test-key",
+  coingeckoBaseUrl: "https://cg.test/api/v3",
+  priceRefreshMs: 1_200_000,
+  networkRefreshMs: 90_000,
+  fluxMaxConcurrency: 2,
+  lookupRatePerMinute: 3,
+  trustProxy: false,
+  staticDir: "does-not-exist",
+};
+
+const node = (addr: string, tier: string, rank: number, extra: object = {}) => ({
+  collateral: "COutPoint(abc, 0)",
+  txhash: "d430804ffb85f37bca175e32a0d02986491ca8c7783dcab2cc56560c09dfc7c7",
+  outidx: 0,
+  ip: "65.108.73.202",
+  network: "ipv4",
+  added_height: 2_519_998,
+  confirmed_height: 2_520_000,
+  last_confirmed_height: 3_063_403,
+  last_paid_height: 3_061_726,
+  tier,
+  payment_address: addr,
+  pubkey: "04deadbeef",
+  activesince: "1700000000",
+  lastpaid: "1792800000",
+  amount: tier === "STRATUS" ? "40000.00" : "12500.00",
+  rank,
+  ...extra,
+});
+
+interface MockState {
+  calls: string[];
+  fluxStatus: "success" | "error";
+  cgHeaders: Record<string, string> | null;
+}
+
+function mockFetch(state: MockState): typeof fetch {
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+  return (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    state.calls.push(url);
+    if (url.startsWith("https://cg.test")) {
+      state.cgHeaders = (init?.headers as Record<string, string>) ?? null;
+      return json({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, last_updated_at: 1792801600 } });
+    }
+    const ok = (data: unknown) => json({ status: state.fluxStatus, data });
+    const path = url.replace("https://flux.test", "");
+    if (path === "/daemon/getblockcount") return ok(HEIGHT);
+    if (path === "/daemon/getfluxnodecount")
+      return ok({ "cumulus-enabled": 3333, "nimbus-enabled": 1663, "stratus-enabled": 1836, "basic-enabled": 3333, "super-enabled": 1663, "bamf-enabled": 1836 });
+    if (path === "/daemon/getblocksubsidy") return ok({ miner: 14 });
+    if (path.startsWith("/daemon/viewdeterministicfluxnodelist"))
+      return ok([node(ADDR, "STRATUS", 0), node(ADDR, "NIMBUS", 40), node(OTHER, "STRATUS", 5)]);
+    if (path.startsWith("/daemon/getaddressdeltas"))
+      return ok([
+        { address: ADDR, blockindex: 0, height: 3_061_003, index: 3, satoshis: 900_000_000, txid: "a" },
+        { address: ADDR, blockindex: 0, height: 3_061_100, index: 2, satoshis: 350_000_000, txid: "b" },
+        { address: ADDR, blockindex: 4, height: 3_061_200, index: 0, satoshis: 900_000_000, txid: "transfer" },
+        { address: ADDR, blockindex: 0, height: 3_061_300, index: 1, satoshis: -100, txid: "spend" },
+      ]);
+    return json({ status: "error", data: { code: 404 } });
+  }) as typeof fetch;
+}
+
+let close: (() => Promise<void>) | null = null;
+afterEach(async () => {
+  await close?.();
+  close = null;
+});
+
+async function setup(overrides: Partial<MockState> = {}) {
+  const state: MockState = { calls: [], fluxStatus: "success", cgHeaders: null, ...overrides };
+  const built = await buildApp({ config, fetchFn: mockFetch(state), background: false, logger: false });
+  await built.flux.refreshNetwork();
+  await built.price.refresh();
+  close = () => built.app.close();
+  return { ...built, state };
+}
+
+describe("GET /api/network", () => {
+  it("returns network data with the reduction countdown", async () => {
+    const { app } = await setup();
+    const res = await app.inject("/api/network");
+    expect(res.statusCode).toBe(200);
+    const body = res.json<NetworkResponse>();
+    expect(body.height).toBe(HEIGHT);
+    expect(body.nodes).toEqual({ cumulus: 3333, nimbus: 1663, stratus: 1836 });
+    expect(body.rewardPerBlock).toEqual({ cumulus: 1, nimbus: 3.5, stratus: 9 });
+    expect(body.chainBlockReward).toBe(14);
+    expect(body.nextReductionHeight).toBe(3_071_200);
+    expect(body.blocksToNextReduction).toBe(7_646);
+    expect(body.stale).toBe(false);
+  });
+
+  it("returns 503 when Flux reports an in-band error", async () => {
+    const { app } = await setup({ fluxStatus: "error" });
+    const res = await app.inject("/api/network");
+    expect(res.statusCode).toBe(503);
+  });
+
+  it("sends security headers", async () => {
+    const { app } = await setup();
+    const res = await app.inject("/api/network");
+    const csp = String(res.headers["content-security-policy"]);
+    expect(csp).toContain("default-src 'self'");
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("object-src 'none'");
+    expect(res.headers["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    expect(res.headers["permissions-policy"]).toContain("camera=()");
+    expect(res.headers["x-powered-by"]).toBeUndefined();
+  });
+});
+
+describe("GET /api/price", () => {
+  it("returns cached prices and sends the API key only to CoinGecko", async () => {
+    const { app, state } = await setup();
+    const res = await app.inject("/api/price");
+    expect(res.statusCode).toBe(200);
+    const body = res.json<PriceResponse>();
+    expect(body.prices.usd).toBe(0.066058);
+    expect(body.source).toBe("CoinGecko");
+    expect(state.cgHeaders?.["x-cg-demo-api-key"]).toBe("test-key");
+    expect(res.body).not.toContain("test-key");
+    // Serving the price again does not call CoinGecko again.
+    const before = state.calls.filter((c) => c.startsWith("https://cg.test")).length;
+    await app.inject("/api/price");
+    expect(state.calls.filter((c) => c.startsWith("https://cg.test")).length).toBe(before);
+  });
+});
+
+describe("GET /api/lookup/:address", () => {
+  it("rejects invalid and partial addresses before calling Flux", async () => {
+    const { app, state } = await setup();
+    const n = state.calls.length;
+    // Test config allows 3 lookups/minute; invalid requests count toward the limit too.
+    for (const bad of ["t3c4Efx", "t3c4EfxLoXXSRZCRnPRF3RpjPi9mBzF5yo0", "%27%3B--"]) {
+      const res = await app.inject(`/api/lookup/${bad}`);
+      expect(res.statusCode).toBe(400);
+    }
+    expect(state.calls.length).toBe(n);
+  });
+
+  it("returns only exact matches, hides IPs, and compares actual vs projected", async () => {
+    const { app } = await setup();
+    const res = await app.inject(`/api/lookup/${ADDR}`);
+    expect(res.statusCode).toBe(200);
+    const body = res.json<LookupResponse>();
+    expect(body.nodes).toHaveLength(2);
+    expect(body.nodes.map((n) => n.tier)).toEqual(["stratus", "nimbus"]);
+    expect(body.totals.nodes).toEqual({ cumulus: 0, nimbus: 1, stratus: 1 });
+    expect(body.totals.collateralFlux).toBe(52_500);
+    expect(body.nodes[0]!.nextPayoutBlocks).toBe(1);
+    expect(body.nodes[0]!.expectedDailyFlux).toBeCloseTo((9 * 2880) / 1836, 8);
+    expect(res.body).not.toContain("65.108.73.202");
+    expect(res.body).not.toContain("04deadbeef");
+    // Only coinbase payments matching a tier reward count.
+    expect(body.history?.payments).toBe(2);
+    expect(body.history?.flux).toBeCloseTo(12.5, 8);
+    expect(body.history?.fluxByTier).toEqual({ cumulus: 0, nimbus: 3.5, stratus: 9 });
+    expect(body.history?.projectedFlux).toBeGreaterThan(0);
+  });
+
+  it("caches lookups and rate-limits per visitor", async () => {
+    const { app, state } = await setup();
+    await app.inject(`/api/lookup/${ADDR}`);
+    const listCalls = () => state.calls.filter((c) => c.includes("viewdeterministicfluxnodelist")).length;
+    expect(listCalls()).toBe(1);
+    await app.inject(`/api/lookup/${ADDR}`);
+    expect(listCalls()).toBe(1);
+    await app.inject(`/api/lookup/${ADDR}`);
+    const limited = await app.inject(`/api/lookup/${ADDR}`);
+    expect(limited.statusCode).toBe(429);
+  });
+});
+
+describe("unknown routes", () => {
+  it("returns JSON 404 for unknown API paths", async () => {
+    const { app } = await setup();
+    const res = await app.inject("/api/nope");
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: "Not found" });
+  });
+});

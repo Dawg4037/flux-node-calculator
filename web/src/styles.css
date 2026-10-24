@@ -1,0 +1,99 @@
+@import "@fontsource-variable/schibsted-grotesk";
+@import "tailwindcss";
+
+/* Design tokens. Tiers step from light to dark blue: Cumulus → Nimbus → Stratus. */
+:root {
+  --paper: #edf1f5;
+  --surface: #f8fafc;
+  --ink: #14243d;
+  --muted: #56677e;
+  --line: #c9d3df;
+  --field: #ffffff;
+  --cumulus: #8db4d9;
+  --nimbus: #3f74b5;
+  --stratus: #1a3d70;
+  --gain: #1e7a57;
+  --loss: #b5452f;
+  --focus: #3f74b5;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0f1b2d;
+    --surface: #15253b;
+    --ink: #e3eaf3;
+    --muted: #93a4ba;
+    --line: #2a3d57;
+    --field: #0f1b2d;
+    --cumulus: #4f7298;
+    --nimbus: #6c9ad6;
+    --stratus: #c4d6ef;
+    --gain: #57c497;
+    --loss: #f08a71;
+    --focus: #8db4d9;
+    color-scheme: dark;
+  }
+}
+
+@theme {
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-field: var(--field);
+  --color-cumulus: var(--cumulus);
+  --color-nimbus: var(--nimbus);
+  --color-stratus: var(--stratus);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Lining figures for data. The family's tabular figures read as a typewriter face, so they're avoided. */
+.num {
+  font-variant-numeric: lining-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .step-in {
+    animation: step-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+@keyframes step-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
