@@ -188,6 +188,21 @@ describe("GET /api/lookup/:address", () => {
   });
 });
 
+describe("rate limits", () => {
+  it("never limits page files, only the API", async () => {
+    const { app } = await setup();
+    for (let i = 0; i < 150; i++) {
+      const res = await app.inject("/assets/index.css");
+      expect(res.statusCode).not.toBe(429);
+    }
+    for (let i = 0; i < 120; i++) await app.inject("/api/network");
+    const limited = await app.inject("/api/network");
+    expect(limited.statusCode).toBe(429);
+    // Page files still load after the API limit is hit.
+    expect((await app.inject("/assets/index.css")).statusCode).not.toBe(429);
+  });
+});
+
 describe("unknown routes", () => {
   it("returns JSON 404 for unknown API paths", async () => {
     const { app } = await setup();

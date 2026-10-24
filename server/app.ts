@@ -67,31 +67,32 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
     reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
   });
 
+  // Rate limits apply to API routes only. The page's own files (HTML, CSS, JS, fonts, icons) are
+  // never limited: if visitors share one IP behind a proxy, a refused stylesheet breaks the page.
   await app.register(rateLimit, {
-    global: true,
-    max: 120,
-    timeWindow: "1 minute",
+    global: false,
     errorResponseBuilder: (_req, ctx) => ({
       statusCode: 429,
       error: `Too many requests. Try again in ${Math.ceil(ctx.ttl / 1000)} seconds.`,
     }),
   });
+  const apiLimit = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
 
   // --------------------------------------------------------------------- api
-  app.get("/api/health", async () => ({
+  app.get("/api/health", apiLimit, async () => ({
     ok: true,
     network: flux.getNetwork() !== null,
     price: price.getPrice() !== null,
   }));
 
-  app.get("/api/network", async (_req, reply) => {
+  app.get("/api/network", apiLimit, async (_req, reply) => {
     const n = flux.getNetwork();
     if (!n) return reply.code(503).header("retry-after", "10").send({ error: "Network data is loading, try again shortly." });
     reply.header("cache-control", "public, max-age=30");
     return n;
   });
 
-  app.get("/api/price", async (_req, reply) => {
+  app.get("/api/price", apiLimit, async (_req, reply) => {
     const p = price.getPrice();
     if (!p) return reply.code(503).header("retry-after", "30").send({ error: "Price data is loading, try again shortly." });
     reply.header("cache-control", "public, max-age=60");
