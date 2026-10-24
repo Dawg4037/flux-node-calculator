@@ -7,14 +7,16 @@ import {
   dailyFluxPerNode,
   fluxAprPct,
   parallelAssetMultiplier,
+  totalAprPct,
 } from "../../../shared/rewards.ts";
 import { fmtDuration, fmtFlux, fmtInt, fmtPct } from "../format.ts";
-import { paActiveNow } from "../model.ts";
+import { paActiveNow, parallelAssetsFor } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { Section, TierSwatch } from "./ui.tsx";
 
 export function NetworkTable({ network, state }: { network: NetworkResponse; state: AppState }) {
   const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
+  const pa = paMult > 0 ? parallelAssetsFor(state, { network, price: 0 }) : undefined;
   return (
     <Section title="Tiers today" aside={`Live from the Flux network`}>
       <div className="overflow-x-auto">
@@ -56,17 +58,29 @@ export function NetworkTable({ network, state }: { network: NetworkResponse; sta
                   <td className="py-2.5 pr-4 text-right">
                     {fmtDuration(network.nodes[t] * BLOCK_TIME_SECONDS * 1000)}
                   </td>
-                  <td className="py-2.5 text-right">{fmtPct(fluxAprPct(t, network.height, network.nodes[t]))}</td>
+                  <td className="py-2.5 text-right">
+                    {pa ? (
+                      <>
+                        {fmtPct(totalAprPct(t, network.height, network.nodes[t], pa))}
+                        <span className="block text-xs text-muted">
+                          {fmtPct(fluxAprPct(t, network.height, network.nodes[t]))} native
+                        </span>
+                      </>
+                    ) : (
+                      fmtPct(fluxAprPct(t, network.height, network.nodes[t]))
+                    )}
+                  </td>
                 </tr>
               ))}
           </tbody>
         </table>
       </div>
       <p className="mt-2 text-xs text-muted">
-        Yearly reward rate is native FLUX earned over the next 12 months as a share of collateral, including the next
-        reduction.
-        {paMult > 0 &&
-          ` "With parallel assets" adds ${state.paCount} × 10% in FLUX on other chains, which must be claimed and will end.`}
+        Yearly reward rate is FLUX earned over the next 12 months as a share of collateral, including the next
+        reduction
+        {paMult > 0
+          ? `, with parallel assets until their end date (${state.paCount} × 10% of each payout, paid on other chains, must be claimed). The smaller figure is native FLUX alone.`
+          : "."}
       </p>
     </Section>
   );

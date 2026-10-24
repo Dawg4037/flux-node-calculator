@@ -297,5 +297,32 @@ export function fluxAprPct(tier: Tier, height: number, enabledInTier: number): n
   return (yearFlux / COLLATERAL[tier]) * 100;
 }
 
+/**
+ * One node's rewards over the next 12 months, split into native FLUX and parallel assets.
+ * Parallel assets stop at their end height and are valued at `valuePct` of native FLUX.
+ */
+export function yearRewardPerNode(
+  tier: Tier,
+  height: number,
+  enabledInTier: number,
+  pa?: ParallelAssets,
+): { native: number; parallel: number; total: number } {
+  if (!(enabledInTier > 0)) return { native: 0, parallel: 0, total: 0 };
+  const native = tierPayoutForRange(tier, height, BLOCKS_PER_YEAR) / enabledInTier;
+  let parallel = 0;
+  const mult = parallelAssetMultiplier(pa);
+  if (pa && mult > 0) {
+    const paBlocks = Math.min(BLOCKS_PER_YEAR, Math.max(0, pa.endHeight - height));
+    const value = clamp(pa.valuePct, 0, 200) / 100;
+    parallel = (tierPayoutForRange(tier, height, paBlocks) / enabledInTier) * mult * value;
+  }
+  return { native, parallel, total: native + parallel };
+}
+
+/** Yearly reward rate (% of collateral) including parallel assets while they last. */
+export function totalAprPct(tier: Tier, height: number, enabledInTier: number, pa?: ParallelAssets): number {
+  return (yearRewardPerNode(tier, height, enabledInTier, pa).total / COLLATERAL[tier]) * 100;
+}
+
 /** Valid transparent Flux address (t1… or t3…, 35 base58 characters). */
 export const FLUX_ADDRESS_RE = /^t[13][1-9A-HJ-NP-Za-km-z]{33}$/;

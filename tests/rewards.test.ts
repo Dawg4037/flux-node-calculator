@@ -9,7 +9,9 @@ import {
   project,
   tierBlockReward,
   tierPayoutForRange,
+  totalAprPct,
   totalBlockRewardSat,
+  yearRewardPerNode,
   type ProjectionInput,
 } from "../shared/rewards.ts";
 
@@ -171,6 +173,24 @@ describe("parallel assets", () => {
   it("pays nothing when excluded or already ended", () => {
     expect(project(base).totalPaFlux).toBe(0);
     expect(project({ ...base, parallelAssets: { count: 9, valuePct: 100, endHeight: 3_000_000 } }).totalPaFlux).toBe(0);
+  });
+
+  it("includes them in the yearly reward rate", () => {
+    const h = 3_071_200;
+    const native = fluxAprPct("stratus", h, 1_836);
+    const pa = { count: 10, valuePct: 100, endHeight: 99_000_000 };
+    expect(totalAprPct("stratus", h, 1_836, pa)).toBeCloseTo(native * 2, 8);
+    expect(totalAprPct("stratus", h, 1_836)).toBeCloseTo(native, 8);
+    // Half value → 1.5× native
+    expect(totalAprPct("stratus", h, 1_836, { ...pa, valuePct: 50 })).toBeCloseTo(native * 1.5, 8);
+  });
+
+  it("stops parallel assets at their end height within the year", () => {
+    const h = 3_071_200;
+    const half = h + BLOCKS_PER_MONTH * 6;
+    const r = yearRewardPerNode("stratus", h, 1_836, { count: 10, valuePct: 100, endHeight: half });
+    expect(r.parallel).toBeCloseTo(tierPayoutForRange("stratus", h, BLOCKS_PER_MONTH * 6) / 1_836, 8);
+    expect(yearRewardPerNode("stratus", h, 1_836, { count: 10, valuePct: 100, endHeight: h - 1 }).parallel).toBe(0);
   });
 
   it("converts dates to heights at 30 s per block", () => {

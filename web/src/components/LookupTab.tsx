@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { LookupResponse } from "../../../shared/api.ts";
-import { FLUX_ADDRESS_RE, TIERS, TIER_LABEL, parallelAssetMultiplier } from "../../../shared/rewards.ts";
+import {
+  FLUX_ADDRESS_RE,
+  TIERS,
+  TIER_LABEL,
+  heightAtTime,
+  parallelAssetMultiplier,
+  yearRewardPerNode,
+  type ParallelAssets,
+} from "../../../shared/rewards.ts";
 import { lookupAddress } from "../api.ts";
 import { fmtFlux, fmtInt, fmtMoney, fmtPct, fmtRelative } from "../format.ts";
 import { paActiveNow } from "../model.ts";
@@ -55,6 +63,28 @@ export function LookupTab({ state, update, price }: Props) {
 
   const c = state.currency;
   const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
+  const pa: ParallelAssets | undefined =
+    result && paMult > 0
+      ? {
+          count: state.paCount,
+          valuePct: state.paValue,
+          endHeight: heightAtTime(Date.parse(`${state.paEnd}T00:00:00Z`), result.height, Date.parse(result.updatedAt)),
+        }
+      : undefined;
+  // Next 12 months for all of this address's nodes, at today's network size.
+  const year = result
+    ? result.nodes.reduce(
+        (acc, n) => {
+          const r = yearRewardPerNode(n.tier, result.height, n.queueSize, pa);
+          return { native: acc.native + r.native, total: acc.total + r.total };
+        },
+        { native: 0, total: 0 },
+      )
+    : { native: 0, total: 0 };
+  const yearRate = result && result.totals.collateralFlux > 0 ? (year.total / result.totals.collateralFlux) * 100 : 0;
+  const nativeRate = result && result.totals.collateralFlux > 0 ? (year.native / result.totals.collateralFlux) * 100 : 0;
+  const dailyPa = result ? result.totals.expectedDailyFlux * paMult * (state.paValue / 100) : 0;
+  const dailyTotal = result ? result.totals.expectedDailyFlux + dailyPa : 0;
   const h = result?.history;
   const diff = h && h.projectedFlux > 0 ? ((h.flux - h.projectedFlux) / h.projectedFlux) * 100 : null;
 
@@ -109,22 +139,37 @@ export function LookupTab({ state, update, price }: Props) {
                     <dd className="num text-2xl font-semibold">{result.totals.nodes[t]}</dd>
                   </div>
                 ))}
+            </dl>
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
               <div>
-                <dt className="text-sm text-muted">Expected per day</dt>
-                <dd className="num text-2xl font-semibold">{fmtFlux(result.totals.expectedDailyFlux)} FLUX</dd>
-                {price !== null && (
-                  <dd className="num text-sm text-muted">{fmtMoney(result.totals.expectedDailyFlux * price, c)}</dd>
-                )}
+                <dt className="text-sm text-muted">{paMult > 0 ? "Native FLUX per day" : "Expected per day"}</dt>
+                <dd className="num text-2xl font-semibold">{fmtFlux(result.totals.expectedDailyFlux)}</dd>
               </div>
               {paMult > 0 && (
                 <div>
-                  <dt className="text-sm text-muted">Plus parallel assets per day</dt>
-                  <dd className="num text-2xl font-semibold">
-                    {fmtFlux(result.totals.expectedDailyFlux * paMult)} FLUX
-                  </dd>
-                  <dd className="text-sm text-muted">Claim in Zelcore, until they end</dd>
+                  <dt className="text-sm text-muted">Parallel assets per day</dt>
+                  <dd className="num text-2xl font-semibold">{fmtFlux(dailyPa)}</dd>
+                  <dd className="text-xs text-muted">Claim in Zelcore, until they end</dd>
                 </div>
               )}
+              {paMult > 0 && (
+                <div>
+                  <dt className="text-sm text-muted">Total per day</dt>
+                  <dd className="num text-2xl font-semibold">{fmtFlux(dailyTotal)} FLUX</dd>
+                  {price !== null && <dd className="num text-sm text-muted">{fmtMoney(dailyTotal * price, c)}</dd>}
+                </div>
+              )}
+              {paMult === 0 && price !== null && (
+                <div>
+                  <dt className="text-sm text-muted">Value per day</dt>
+                  <dd className="num text-2xl font-semibold">{fmtMoney(result.totals.expectedDailyFlux * price, c)}</dd>
+                </div>
+              )}
+              <div>
+                <dt className="text-sm text-muted">Yearly reward rate</dt>
+                <dd className="num text-2xl font-semibold">{fmtPct(yearRate)}</dd>
+                {paMult > 0 && <dd className="num text-xs text-muted">{fmtPct(nativeRate)} native</dd>}
+              </div>
             </dl>
             <button
               type="button"
@@ -137,7 +182,7 @@ export function LookupTab({ state, update, price }: Props) {
 
           {h ? (
             <div className="rounded-md border border-line bg-surface p-4">
-              <p className="text-sm text-muted">Last {h.days} days</p>
+              <p className="text-sm text-muted">Last {h.days} days, native FLUX only</p>
               <p className="mt-1 text-xl">
                 <span className="num font-semibold">{fmtFlux(h.flux)} FLUX</span> received across{" "}
                 <span className="num">{fmtInt(h.payments)}</span> payouts, against{" "}
@@ -150,7 +195,7 @@ export function LookupTab({ state, update, price }: Props) {
                 )}
               </p>
               <p className="mt-1 text-xs text-muted">
-                Native FLUX only: parallel assets accrue on other chains until you claim them. Expected assumes today's
+                Parallel assets are paid on other chains, so they can't be checked here. Expected assumes today's
                 node counts and counts each node from when it was confirmed. A shortfall usually means a node missed
                 confirmations or was offline.
               </p>
