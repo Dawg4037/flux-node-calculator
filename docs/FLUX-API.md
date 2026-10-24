@@ -23,14 +23,28 @@ Base URL: `https://api.runonflux.io` (load-balanced gateway). All endpoints belo
 
 Next-payout estimate: `rank × 30 s`, if `rank` is the position within the node's tier.
 
+## Rate limits (from Flux community, Oct 2026)
+
+- FluxOS has no blanket requests-per-second limit; some individual endpoints have their own limits.
+- Standard daemon RPC calls are capped at **5 concurrent calls** per node through FluxOS.
+- `api.runonflux.io` sits behind a load balancer; whether the gateway adds its own limits is unconfirmed.
+
+Design response:
+
+- Never more than 2 concurrent upstream calls per instance (queue the rest).
+- Network data (height, node counts) refreshed every 60–120 s and shared by all visitors.
+- Lookup results cached per address for 60 s; per-IP rate limit on lookups.
+- Retries with backoff on errors or 429s; serve stale cache if the gateway is unavailable.
+- Direct node IPs as a fallback are possible but out of scope for v1.
+
 ## Open questions
 
 - [ ] Current `getblocksubsidy` response shape after PoUW v2.
 - [ ] Meaning of `rank` (per tier or global).
 - [ ] Live `getfluxnodecount` field names (legacy vs. tier names).
-- [ ] Gateway rate limits (user checking with Flux).
+- [ ] Whether the gateway applies its own rate limits.
 - [ ] Reliable way to separate reward payments from other transfers in address deltas.
 
 ## Not provided by Flux
 
-- FLUX market price → external source (see PLAN.md).
+- FLUX market price → CoinGecko (see PLAN.md).

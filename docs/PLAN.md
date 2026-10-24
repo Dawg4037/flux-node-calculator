@@ -26,12 +26,14 @@ One container on FluxCloud: a small backend that serves the frontend and a cache
 - **Visitors never call third parties directly** (privacy, rate limits, no keys in the browser).
 - **Node IPs are never exposed** in lookup results.
 
-## Price source (proposed, not final)
+## Price source (decided)
 
-- Primary: median FLUX/USDT from 2–3 exchange public tickers (no key, no monthly cap).
-- Fiat conversion: free daily FX feed for EUR/GBP/CAD.
-- Fallback: CoinGecko Demo on its own key (separate from the personal dashboard), 15–30 min refresh, attribution shown.
-- Refresh every 15 minutes.
+- **CoinGecko Demo (free) plan**, dedicated to this project. Limits: 10,000 calls/month, 100/min; attribution required.
+- One `simple/price` call per refresh returns USD, CAD, EUR and GBP together.
+- Refresh every **20 minutes per instance**: 3 instances × 72/day × 31 days ≈ 6,700 calls/month, leaving headroom for restarts and extra instances. Interval is configurable.
+- API key stored as a FluxCloud environment secret; never sent to the browser.
+- On failure, serve the last good price with its timestamp and a "stale" flag.
+- "Price data by CoinGecko" attribution in the footer.
 
 ## Security requirements
 
@@ -49,9 +51,9 @@ One container on FluxCloud: a small backend that serves the frontend and a cache
 4. Hardening and tests; check results against Flux's official calculator.
 5. Deploy to FluxCloud.
 
-## Open decisions
+## Decisions
 
-- Price source (proposal above).
-- Tech stack.
-- License.
-- Domain.
+- [x] Price source: CoinGecko Demo plan.
+- [x] License: MIT.
+- [ ] Tech stack.
+- [ ] Domain.
