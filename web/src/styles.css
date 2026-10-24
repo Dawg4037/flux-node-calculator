@@ -18,8 +18,9 @@
   color-scheme: light;
 }
 
+/* Dark palette: follows the system unless the visitor picked Light; always applies when they picked Dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #0f1b2d;
     --surface: #15253b;
     --ink: #e3eaf3;
@@ -34,6 +35,21 @@
     --focus: #8db4d9;
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1b2d;
+  --surface: #15253b;
+  --ink: #e3eaf3;
+  --muted: #93a4ba;
+  --line: #2a3d57;
+  --field: #0f1b2d;
+  --cumulus: #4f7298;
+  --nimbus: #6c9ad6;
+  --stratus: #c4d6ef;
+  --gain: #57c497;
+  --loss: #f08a71;
+  --focus: #8db4d9;
+  color-scheme: dark;
 }
 
 @theme {

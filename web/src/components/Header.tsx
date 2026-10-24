@@ -6,6 +6,7 @@ import {
   totalBlockRewardSat,
 } from "../../../shared/rewards.ts";
 import { fmtDate, fmtDuration, fmtInt, fmtPrice } from "../format.ts";
+import { THEMES, type Theme } from "../theme.ts";
 
 /** Exact step values (14, 12.6, 11.34, 10.206…), trimmed to 4 decimals. */
 const stepLabel = (v: number) => String(Number(v.toFixed(4)));
@@ -15,7 +16,11 @@ interface Props {
   price: PriceResponse | null;
   currency: Currency;
   onCurrency: (c: Currency) => void;
+  theme: Theme;
+  onTheme: (t: Theme) => void;
 }
+
+const THEME_LABEL: Record<Theme, string> = { system: "System", light: "Light", dark: "Dark" };
 
 function useNow(intervalMs = 1000) {
   const [now, setNow] = useState(() => Date.now());
@@ -82,7 +87,7 @@ function RewardStaircase({ height }: { height: number }) {
   );
 }
 
-export function Header({ network, price, currency, onCurrency }: Props) {
+export function Header({ network, price, currency, onCurrency, theme, onTheme }: Props) {
   const now = useNow();
   const etaMs = network ? new Date(network.nextReductionEta).getTime() - now : 0;
 
@@ -90,20 +95,36 @@ export function Header({ network, price, currency, onCurrency }: Props) {
     <header className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-lg font-semibold tracking-tight">Flux Node Calculator</p>
-        <label className="flex items-center gap-2 text-sm text-muted">
-          Currency
-          <select
-            value={currency}
-            onChange={(e) => onCurrency(e.target.value as Currency)}
-            className="rounded-md border border-line bg-field px-2 py-1 text-ink"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2 text-sm text-muted">
+            Theme
+            <select
+              value={theme}
+              onChange={(e) => onTheme(e.target.value as Theme)}
+              className="rounded-md border border-line bg-field px-2 py-1 text-ink"
+            >
+              {THEMES.map((t) => (
+                <option key={t} value={t}>
+                  {THEME_LABEL[t]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted">
+            Currency
+            <select
+              value={currency}
+              onChange={(e) => onCurrency(e.target.value as Currency)}
+              className="rounded-md border border-line bg-field px-2 py-1 text-ink"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-end">

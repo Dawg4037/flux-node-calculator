@@ -5,7 +5,9 @@ import { Header } from "./components/Header.tsx";
 import { LookupTab } from "./components/LookupTab.tsx";
 import { NetworkTable } from "./components/NetworkTable.tsx";
 import { ProjectionsTab } from "./components/ProjectionsTab.tsx";
+import { Contribute } from "./components/Contribute.tsx";
 import { Notice } from "./components/ui.tsx";
+import { useTheme } from "./theme.ts";
 import type { Market } from "./model.ts";
 import { TABS, useAppState, type Tab } from "./state.ts";
 
@@ -17,6 +19,7 @@ const TAB_LABEL: Record<Tab, string> = {
 
 export function App() {
   const [state, update] = useAppState();
+  const [theme, setTheme] = useTheme();
   const network = useNetwork();
   const price = usePrice();
 
@@ -40,6 +43,8 @@ export function App() {
         price={price.data}
         currency={state.currency}
         onCurrency={(currency) => update({ currency })}
+        theme={theme}
+        onTheme={setTheme}
       />
 
       <main className="mx-auto max-w-6xl space-y-10 px-4 py-10 sm:px-6">
@@ -89,7 +94,8 @@ export function App() {
       </main>
 
       <footer className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="space-y-2 border-t border-line py-8 text-sm text-muted">
+        <div className="space-y-4 border-t border-line py-8 text-sm text-muted">
+        <Contribute />
         <p>
           Estimates only, not financial advice. Progressive Node Rewards (FluxCloud revenue share) aren't included because no
           formula has been published. Rewards assume your nodes stay confirmed.
