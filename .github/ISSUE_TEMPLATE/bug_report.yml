@@ -1,0 +1,31 @@
+name: Report a problem
+description: Something looks wrong, a number seems off, or the page doesn't load properly.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link to the page
+      description: Copy the address bar. It includes your calculator settings. Leave out any payment address you'd rather not share.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Shown at the bottom of the page, e.g. v0.1.4.
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: e.g. Chrome on Windows, Safari on iPhone
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Optional. Drag an image here.

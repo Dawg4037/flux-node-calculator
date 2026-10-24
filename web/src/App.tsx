@@ -11,6 +11,8 @@ import { useTheme } from "./theme.ts";
 import type { Market } from "./model.ts";
 import { TABS, useAppState, type Tab } from "./state.ts";
 
+const REPO_URL = "https://github.com/Dawg4037/flux-node-calculator";
+
 const TAB_LABEL: Record<Tab, string> = {
   earnings: "Earnings and ROI",
   projections: "Projections",
@@ -96,25 +98,41 @@ export function App() {
       <footer className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="space-y-4 border-t border-line py-8 text-sm text-muted">
         <Contribute />
+        <ul className="flex flex-wrap gap-x-5 gap-y-2 text-ink">
+          <li>
+            <a className="underline" href="https://runonflux.com/" rel="noopener noreferrer" target="_blank">
+              Runs on Flux
+            </a>
+          </li>
+          <li>
+            Built by{" "}
+            <a className="underline" href="https://github.com/Dawg4037" rel="noopener noreferrer" target="_blank">
+              Dawg4037
+            </a>
+          </li>
+          <li>
+            <a className="underline" href={REPO_URL} rel="noopener noreferrer" target="_blank">
+              Source on GitHub
+            </a>
+          </li>
+          <li>
+            <a className="underline" href={`${REPO_URL}/issues/new/choose`} rel="noopener noreferrer" target="_blank">
+              Report an issue or suggest a feature
+            </a>
+          </li>
+          <li className="num text-muted">v{__APP_VERSION__}</li>
+        </ul>
         <p>
-          Estimates only, not financial advice. Progressive Node Rewards (FluxCloud revenue share) aren't included because no
-          formula has been published. Rewards assume your nodes stay confirmed.
+          Independent community tool, not affiliated with Flux. Estimates only, not financial advice. Progressive Node
+          Rewards (FluxCloud revenue share) aren't included because no formula has been published. Rewards assume your
+          nodes stay confirmed.
         </p>
         <p>
           Price data by{" "}
           <a className="underline" href="https://www.coingecko.com/" rel="noopener noreferrer" target="_blank">
             CoinGecko
           </a>
-          . Network data from the Flux API.{" "}
-          <a
-            className="underline"
-            href="https://github.com/Dawg4037/flux-node-calculator"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Source code
-          </a>{" "}
-          (MIT).
+          . Network data from the Flux API. Open source under the MIT license.
         </p>
         </div>
       </footer>
