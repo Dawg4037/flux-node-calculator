@@ -1,62 +1,55 @@
-# Deploying to FluxCloud with Orbit
+# Deploying to FluxCloud with Docker
 
-Orbit (Deploy with Git) runs the `runonflux/orbit` image, which clones this repo, installs dependencies, builds, and starts the app. There is no Docker image to publish.
+The app ships as a Docker image on Docker Hub; FluxCloud pulls and runs it. The image is built from the repo's `Dockerfile`: tests run during the build, and the final image runs as a non-root user with only production dependencies.
 
-## Before the first deploy
+## 1. Build and push the image
 
-1. **`release` branch** — Orbit deploys `release`, so work on `main` never goes live by accident. (Created.)
-2. **Repo access** — either make the repo public (it's MIT-licensed) so Orbit needs no token, or create a fine-grained token that is **read-only (Contents: Read)** and limited to this repository, and set it as `GIT_TOKEN`.
-3. **CoinGecko key** — a Demo API key dedicated to this app.
+From the repo root, signed in to Docker Hub (`docker login`). Flux nodes run x86-64, so build for `linux/amd64`:
 
-## Register the app
+```sh
+docker build --platform linux/amd64 -t <dockerhub-user>/flux-node-calculator:0.1.0 .
+docker push <dockerhub-user>/flux-node-calculator:0.1.0
+```
 
-At [cloud.runonflux.com](https://cloud.runonflux.com) → Register New App → Deploy with Git.
+Use a new version tag for every release (`0.1.1`, `0.2.0`, …) rather than only `latest`, so each deployment points at an exact build and a rollback is just switching the tag back.
+
+The image must be **public** on Docker Hub. It contains no secrets: the CoinGecko key is supplied at runtime.
+
+## 2. Register the app
+
+At [cloud.runonflux.com](https://cloud.runonflux.com) → Register New App → Deploy with Docker.
 
 | Setting | Value |
 |---|---|
-| Component image | `runonflux/orbit:latest` |
+| Image | `<dockerhub-user>/flux-node-calculator:0.1.0` |
 | Container port | `8080` |
 | External port | any free port the form offers |
 | Instances | 3 (standard mode; no `g:` data path) |
-| CPU | 1 |
-| RAM | 2048 MB (the build needs headroom; the running app uses far less) |
-| Storage | 5 GB |
+| CPU | 0.5 |
+| RAM | 512 MB |
+| Storage | 1 GB |
+
+The app stores nothing on disk and uses ~100 MB of memory, so these minimums are plenty.
 
 ### Environment variables
 
 | Variable | Value | Notes |
 |---|---|---|
-| `GIT_REPO_URL` | `https://github.com/Dawg4037/flux-node-calculator` | |
-| `GIT_BRANCH` | `release` | |
-| `APP_PORT` | `8080` | Orbit's health check requests `/` on this port |
-| `PORT` | `8080` | What the server listens on |
-| `BUILD_COMMAND` | `npm ci --include=dev && npm run build` | Build tools are dev dependencies |
-| `RUN_COMMAND` | `npm start` | |
-| `POLLING_INTERVAL` | `300` | Checks `release` for new commits every 5 min |
 | `COINGECKO_API_KEY` | *(your Demo key)* | Server-side only |
 | `PRICE_REFRESH_MINUTES` | `20` | Keeps 3 instances under the 10k calls/month Demo cap |
 
-Node 22 comes from `.nvmrc`. Don't set `NODE_ENV=production` (it would skip the build tools), and don't set `WEBHOOK_SECRET` or expose port 9001 — polling needs nothing open to the public.
+`PORT` is already `8080` in the image. Other settings (`NETWORK_REFRESH_SECONDS`, `FLUX_MAX_CONCURRENCY`, `LOOKUP_RATE_PER_MINUTE`, `TRUST_PROXY`) have safe defaults — see `.env.example`.
 
-Other settings (`NETWORK_REFRESH_SECONDS`, `FLUX_MAX_CONCURRENCY`, `LOOKUP_RATE_PER_MINUTE`, `TRUST_PROXY`) have safe defaults — see `.env.example`.
+Review the price, sign in Zelcore, and pay.
 
-## After deploying
+## 3. Check it
 
-- First build takes a few minutes (Orbit's limit is 30). Watch the SETUP → BUILD → START stages in the app's logs.
-- `https://<app>.app.runonflux.io/api/health` should return `{"ok":true,"network":true,"price":true}` within a minute of starting.
+- `https://<app>.app.runonflux.io/api/health` → `{"ok":true,"network":true,"price":true}` within a minute of starting.
 - In the logs, `chain block reward differs from schedule` means the chain's reward no longer matches the coded schedule.
 
 ## Releasing an update
 
-```sh
-git checkout release
-git merge main
-git push
-```
-
-Orbit picks it up within `POLLING_INTERVAL`, rebuilds, health-checks, and rolls back automatically if anything fails.
-
-## Still to confirm on the first deploy
-
-- Whether Orbit's own install step already includes dev dependencies (if so, `BUILD_COMMAND` can drop `npm ci --include=dev &&`).
-- How long a rebuild takes each instance offline, if at all.
+1. Bump `version` in `package.json`.
+2. Build and push with the new tag.
+3. In FluxCloud, update the app spec's image to the new tag and sign the update.
+4. Merge `main` into `release` so the branch matches what's live.

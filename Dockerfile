@@ -1,5 +1,4 @@
-# Optional hardened image. Version 1 deploys with Flux Orbit (see docs/DEPLOY.md);
-# this is here for a later move to a self-built image.
+# Production image for FluxCloud (see docs/DEPLOY.md).
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

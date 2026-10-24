@@ -49,12 +49,12 @@ One container on FluxCloud: a small backend that serves the frontend and a cache
 2. ~~Backend: network, price, lookup endpoints with caching.~~ Done.
 3. ~~Frontend: the three v1 features; A/B comparison and shareable URLs.~~ Done.
 4. Check results against Flux's official calculator.
-5. Deploy to FluxCloud with Orbit (see DEPLOY.md).
+5. Deploy to FluxCloud with Docker (see DEPLOY.md).
 
 ## Decisions
 
 - [x] Price source: CoinGecko Demo plan.
 - [x] License: MIT.
 - [x] Tech stack: TypeScript throughout — React + Vite + Tailwind frontend, Fastify backend, shared reward math.
-- [x] Deployment: Flux Orbit from the `release` branch, standard (all-instances) mode.
+- [x] Deployment: Docker image on Docker Hub, registered on FluxCloud, standard (all-instances) mode.
 - [ ] Domain: after a working version is live on FluxCloud.

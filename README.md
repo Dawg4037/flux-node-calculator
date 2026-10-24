@@ -62,7 +62,7 @@ tests/    Vitest tests
 
 ## Docs
 
-- [Deploying with Orbit](docs/DEPLOY.md)
+- [Deploying to FluxCloud](docs/DEPLOY.md)
 - [Plan](docs/PLAN.md)
 - [Flux API notes](docs/FLUX-API.md)
 
