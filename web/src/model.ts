@@ -1,6 +1,6 @@
 /** Glue between app state, live data and the shared reward math. */
 import type { NetworkResponse } from "../../shared/api.ts";
-import { project, type ProjectionResult } from "../../shared/rewards.ts";
+import { heightAtTime, project, type ParallelAssets, type ProjectionResult } from "../../shared/rewards.ts";
 import type { AppState, Setup } from "./state.ts";
 
 export interface Market {
@@ -26,7 +26,23 @@ export function runProjection(
     upfrontCost: setup.upfront,
     collateralPrice: state.collateralPrice ?? market.price,
     includeCollateralInBreakEven: state.includeCollateral,
+    parallelAssets: parallelAssetsFor(state, market),
   });
 }
+
+/** Parallel-asset settings for the shared math, or undefined when they're switched off. */
+export function parallelAssetsFor(state: AppState, market: Market): ParallelAssets | undefined {
+  if (!state.pa) return undefined;
+  const endMs = Date.parse(`${state.paEnd}T00:00:00Z`);
+  return {
+    count: state.paCount,
+    valuePct: state.paValue,
+    endHeight: heightAtTime(endMs, market.network.height, new Date(market.network.updatedAt).getTime()),
+  };
+}
+
+/** True when parallel assets are switched on and still paying today. */
+export const paActiveNow = (state: AppState) =>
+  state.pa && state.paCount > 0 && Date.parse(`${state.paEnd}T00:00:00Z`) > Date.now();
 
 export const hasNodes = (s: Setup) => s.nodes.cumulus + s.nodes.nimbus + s.nodes.stratus > 0;

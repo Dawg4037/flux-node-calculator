@@ -1,7 +1,13 @@
 /** Calculator inputs, kept in the URL so any setup can be shared as a link. */
 import { useCallback, useEffect, useState } from "react";
 import { CURRENCIES, type Currency } from "../../shared/api.ts";
-import { FLUX_ADDRESS_RE, TIERS, type PerTier } from "../../shared/rewards.ts";
+import {
+  DEFAULT_PARALLEL_ASSET_COUNT,
+  DEFAULT_PARALLEL_ASSET_END,
+  FLUX_ADDRESS_RE,
+  TIERS,
+  type PerTier,
+} from "../../shared/rewards.ts";
 
 export const TABS = ["earnings", "projections", "lookup"] as const;
 export type Tab = (typeof TABS)[number];
@@ -29,6 +35,13 @@ export interface AppState {
   base: number;
   bull: number;
   address: string;
+  /** Include parallel-asset rewards. */
+  pa: boolean;
+  paCount: number;
+  /** Value of parallel-asset FLUX vs native FLUX, in %. */
+  paValue: number;
+  /** Projected end date, YYYY-MM-DD. */
+  paEnd: string;
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -45,7 +58,14 @@ export const DEFAULT_STATE: AppState = {
   base: 0,
   bull: 30,
   address: "",
+  pa: true,
+  paCount: DEFAULT_PARALLEL_ASSET_COUNT,
+  paValue: 100,
+  paEnd: DEFAULT_PARALLEL_ASSET_END,
 };
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const validDate = (v: string | null) => (v && DATE_RE.test(v) && !Number.isNaN(Date.parse(v)) ? v : null);
 
 const TIER_KEY: PerTier<string> = { cumulus: "c", nimbus: "n", stratus: "s" };
 
@@ -97,6 +117,10 @@ export function parseState(search: string): AppState {
     base: readNum(p, "pm", d.base, -99, 1000),
     bull: readNum(p, "pu", d.bull, -99, 1000),
     address: FLUX_ADDRESS_RE.test(addr) ? addr : "",
+    pa: p.get("pa") !== "0",
+    paCount: readNum(p, "pac", d.paCount, 0, 20, true),
+    paValue: readNum(p, "pav", d.paValue, 0, 200),
+    paEnd: validDate(p.get("pae")) ?? d.paEnd,
   };
 }
 
@@ -117,6 +141,10 @@ export function serializeState(s: AppState): string {
   p.set("pm", String(s.base));
   p.set("pu", String(s.bull));
   if (s.address) p.set("addr", s.address);
+  if (!s.pa) p.set("pa", "0");
+  if (s.paCount !== DEFAULT_STATE.paCount) p.set("pac", String(s.paCount));
+  if (s.paValue !== DEFAULT_STATE.paValue) p.set("pav", String(s.paValue));
+  if (s.paEnd !== DEFAULT_STATE.paEnd) p.set("pae", s.paEnd);
   return p.toString();
 }
 

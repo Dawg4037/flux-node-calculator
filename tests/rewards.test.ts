@@ -4,6 +4,7 @@ import {
   FLUX_ADDRESS_RE,
   dailyFluxPerNode,
   fluxAprPct,
+  heightAtTime,
   nextReductionHeight,
   project,
   tierBlockReward,
@@ -127,6 +128,54 @@ describe("projection", () => {
     const r = project({ ...base, months: 1e9, yourNodes: { cumulus: -5, nimbus: NaN, stratus: 1 } });
     expect(r.months).toHaveLength(240);
     expect(r.months[0]!.flux.cumulus).toBe(0);
+  });
+});
+
+describe("parallel assets", () => {
+  const base: ProjectionInput = {
+    startHeight: 3_071_200,
+    months: 24,
+    yourNodes: { cumulus: 0, nimbus: 0, stratus: 1 },
+    networkNodes: { cumulus: 3_333, nimbus: 1_663, stratus: 1_836 },
+    networkGrowthPctPerYear: 0,
+    startPrice: 1,
+    priceChangePctPerYear: 0,
+    monthlyCostPerNode: { cumulus: 0, nimbus: 0, stratus: 0 },
+    upfrontCost: 0,
+    collateralPrice: 0,
+    includeCollateralInBreakEven: false,
+  };
+
+  it("adds 10% per active asset while they last", () => {
+    const r = project({ ...base, parallelAssets: { count: 9, valuePct: 100, endHeight: 99_000_000 } });
+    const m = r.months[0]!;
+    expect(m.paFlux).toBeCloseTo(m.fluxTotal * 0.9, 8);
+    expect(m.revenue).toBeCloseTo(m.fluxTotal * 1.9, 8);
+  });
+
+  it("applies their relative value to revenue only", () => {
+    const r = project({ ...base, parallelAssets: { count: 9, valuePct: 50, endHeight: 99_000_000 } });
+    const m = r.months[0]!;
+    expect(m.paFlux).toBeCloseTo(m.fluxTotal * 0.9, 8);
+    expect(m.revenue).toBeCloseTo(m.fluxTotal * 1.45, 8);
+  });
+
+  it("stops at the end height, prorating the final month", () => {
+    const end = 3_071_200 + BLOCKS_PER_MONTH * 2.5;
+    const r = project({ ...base, parallelAssets: { count: 9, valuePct: 100, endHeight: end } });
+    expect(r.months[1]!.paFlux).toBeCloseTo(r.months[1]!.fluxTotal * 0.9, 8);
+    expect(r.months[2]!.paFlux).toBeCloseTo(r.months[2]!.fluxTotal * 0.45, 8);
+    expect(r.months[3]!.paFlux).toBe(0);
+  });
+
+  it("pays nothing when excluded or already ended", () => {
+    expect(project(base).totalPaFlux).toBe(0);
+    expect(project({ ...base, parallelAssets: { count: 9, valuePct: 100, endHeight: 3_000_000 } }).totalPaFlux).toBe(0);
+  });
+
+  it("converts dates to heights at 30 s per block", () => {
+    const now = Date.UTC(2026, 9, 24);
+    expect(heightAtTime(now + 86_400_000, 3_063_554, now)).toBe(3_063_554 + 2_880);
   });
 });
 

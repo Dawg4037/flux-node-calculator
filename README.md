@@ -18,6 +18,8 @@ Verified against the live chain (October 2026):
 - One node earns `tier reward per block × 2,880 ÷ enabled nodes in its tier` per day.
 - Collateral: Cumulus 1,000 / Nimbus 12,500 / Stratus 40,000 FLUX.
 
+**Parallel assets are included by default.** Each active parallel asset (9 as of October 2026: Kadena, Ethereum, BSC, Tron, Solana, Avalanche, Algorand, Polygon, Base) pays an extra 10% of every node payout on its own chain. They must be claimed manually in Zelcore (Apps → Fusion → Parallel Mining Claim), each claim costs a network fee, and Flux projects them running out around 2028. The calculator stops them on a configurable end date (default January 1, 2028) and warns that the real end will likely be earlier. Visitors can change the number of active assets, their value relative to native FLUX, and the end date, or switch them off.
+
 Progressive Node Rewards (FluxCloud revenue share) are not included: no formula has been published.
 
 ## Running locally

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { LookupResponse } from "../../../shared/api.ts";
-import { FLUX_ADDRESS_RE, TIERS, TIER_LABEL } from "../../../shared/rewards.ts";
+import { FLUX_ADDRESS_RE, TIERS, TIER_LABEL, parallelAssetMultiplier } from "../../../shared/rewards.ts";
 import { lookupAddress } from "../api.ts";
 import { fmtFlux, fmtInt, fmtMoney, fmtPct, fmtRelative } from "../format.ts";
+import { paActiveNow } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { Notice, TierSwatch } from "./ui.tsx";
 
@@ -53,6 +54,7 @@ export function LookupTab({ state, update, price }: Props) {
   };
 
   const c = state.currency;
+  const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
   const h = result?.history;
   const diff = h && h.projectedFlux > 0 ? ((h.flux - h.projectedFlux) / h.projectedFlux) * 100 : null;
 
@@ -114,6 +116,15 @@ export function LookupTab({ state, update, price }: Props) {
                   <dd className="num text-sm text-muted">{fmtMoney(result.totals.expectedDailyFlux * price, c)}</dd>
                 )}
               </div>
+              {paMult > 0 && (
+                <div>
+                  <dt className="text-sm text-muted">Plus parallel assets per day</dt>
+                  <dd className="num text-2xl font-semibold">
+                    {fmtFlux(result.totals.expectedDailyFlux * paMult)} FLUX
+                  </dd>
+                  <dd className="text-sm text-muted">Claim in Zelcore, until they end</dd>
+                </div>
+              )}
             </dl>
             <button
               type="button"
@@ -139,8 +150,9 @@ export function LookupTab({ state, update, price }: Props) {
                 )}
               </p>
               <p className="mt-1 text-xs text-muted">
-                Expected assumes today's node counts and counts each node from when it was confirmed. A shortfall usually
-                means a node missed confirmations or was offline.
+                Native FLUX only: parallel assets accrue on other chains until you claim them. Expected assumes today's
+                node counts and counts each node from when it was confirmed. A shortfall usually means a node missed
+                confirmations or was offline.
               </p>
             </div>
           ) : (

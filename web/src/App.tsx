@@ -55,7 +55,7 @@ export function App() {
           <Notice tone="error">Can't load the FLUX price right now ({price.error}). Retrying.</Notice>
         )}
 
-        {network.data && <NetworkTable network={network.data} />}
+        {network.data && <NetworkTable network={network.data} state={state} />}
 
         <section className="border-t border-line pt-6">
           <div role="tablist" aria-label="Calculator sections" className="mb-8 flex gap-1 overflow-x-auto border-b border-line">

@@ -6,11 +6,15 @@ import {
   TIER_LABEL,
   dailyFluxPerNode,
   fluxAprPct,
+  parallelAssetMultiplier,
 } from "../../../shared/rewards.ts";
 import { fmtDuration, fmtFlux, fmtInt, fmtPct } from "../format.ts";
+import { paActiveNow } from "../model.ts";
+import type { AppState } from "../state.ts";
 import { Section, TierSwatch } from "./ui.tsx";
 
-export function NetworkTable({ network }: { network: NetworkResponse }) {
+export function NetworkTable({ network, state }: { network: NetworkResponse; state: AppState }) {
+  const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
   return (
     <Section title="Tiers today" aside={`Live from the Flux network`}>
       <div className="overflow-x-auto">
@@ -22,6 +26,7 @@ export function NetworkTable({ network }: { network: NetworkResponse }) {
               <th className="py-2 pr-4 text-right font-normal">Enabled nodes</th>
               <th className="py-2 pr-4 text-right font-normal">FLUX per block</th>
               <th className="py-2 pr-4 text-right font-normal">Per node per day</th>
+              {paMult > 0 && <th className="py-2 pr-4 text-right font-normal">With parallel assets</th>}
               <th className="py-2 pr-4 text-right font-normal">Paid about every</th>
               <th className="py-2 text-right font-normal">Yearly reward rate</th>
             </tr>
@@ -43,6 +48,11 @@ export function NetworkTable({ network }: { network: NetworkResponse }) {
                   <td className="py-2.5 pr-4 text-right">
                     {fmtFlux(dailyFluxPerNode(t, network.height, network.nodes[t]))} FLUX
                   </td>
+                  {paMult > 0 && (
+                    <td className="py-2.5 pr-4 text-right">
+                      {fmtFlux(dailyFluxPerNode(t, network.height, network.nodes[t]) * (1 + paMult))} FLUX
+                    </td>
+                  )}
                   <td className="py-2.5 pr-4 text-right">
                     {fmtDuration(network.nodes[t] * BLOCK_TIME_SECONDS * 1000)}
                   </td>
@@ -53,7 +63,10 @@ export function NetworkTable({ network }: { network: NetworkResponse }) {
         </table>
       </div>
       <p className="mt-2 text-xs text-muted">
-        Yearly reward rate is FLUX earned over the next 12 months as a share of collateral, including the next reduction.
+        Yearly reward rate is native FLUX earned over the next 12 months as a share of collateral, including the next
+        reduction.
+        {paMult > 0 &&
+          ` "With parallel assets" adds ${state.paCount} × 10% in FLUX on other chains, which must be claimed and will end.`}
       </p>
     </Section>
   );

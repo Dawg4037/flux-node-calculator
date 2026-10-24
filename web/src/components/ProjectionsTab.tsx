@@ -4,6 +4,7 @@ import { fmtFlux, fmtMoney, fmtMonths, fmtPrice } from "../format.ts";
 import { hasNodes, runProjection, type Market } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { LineChart } from "./LineChart.tsx";
+import { ParallelAssetsNote, ParallelAssetsSettings } from "./ParallelAssets.tsx";
 import { Notice, NumberField } from "./ui.tsx";
 
 interface Props {
@@ -36,7 +37,8 @@ export function ProjectionsTab({ state, update, market }: Props) {
     return {
       year: y + 1,
       flux: slice.reduce((s, m) => s + m.fluxTotal, 0),
-      cumulativeFlux: last.cumulativeFlux,
+      pa: slice.reduce((s, m) => s + m.paFlux, 0),
+      cumulativeFlux: last.cumulativeFlux + last.cumulativePaFlux,
       price: last.price,
       net: slice.reduce((s, m) => s + m.net, 0),
       cumulativeNet: last.cumulativeNet,
@@ -71,6 +73,9 @@ export function ProjectionsTab({ state, update, market }: Props) {
             Starting from {fmtPrice(market.price, c)}. These are your assumptions, not forecasts.
           </p>
         </fieldset>
+        <div className="border-t border-line pt-5">
+          <ParallelAssetsSettings state={state} update={update} />
+        </div>
       </div>
 
       <div className="space-y-8">
@@ -78,7 +83,8 @@ export function ProjectionsTab({ state, update, market }: Props) {
           <h3 className="text-lg font-semibold">Cumulative profit</h3>
           <p className="mb-4 text-sm text-muted">
             Revenue minus running costs over {state.years} {state.years === 1 ? "year" : "years"}, including{" "}
-            {cuts} reward {cuts === 1 ? "reduction" : "reductions"}.
+            {cuts} reward {cuts === 1 ? "reduction" : "reductions"}
+            {state.pa ? ", with parallel assets until their end date" : ""}.
           </p>
           <LineChart
             ariaLabel="Cumulative profit by month for three price scenarios"
@@ -115,7 +121,8 @@ export function ProjectionsTab({ state, update, market }: Props) {
             <thead className="text-muted">
               <tr className="border-b border-line text-right">
                 <th className="py-2 pr-4 text-left font-normal">Year</th>
-                <th className="py-2 pr-4 font-normal">FLUX earned</th>
+                <th className="py-2 pr-4 font-normal">{state.pa ? "Native FLUX" : "FLUX earned"}</th>
+                {state.pa && <th className="py-2 pr-4 font-normal">Parallel assets</th>}
                 <th className="py-2 pr-4 font-normal">Total FLUX</th>
                 <th className="py-2 pr-4 font-normal">Price at year end</th>
                 <th className="py-2 pr-4 font-normal">Net that year</th>
@@ -127,6 +134,7 @@ export function ProjectionsTab({ state, update, market }: Props) {
                 <tr key={y.year} className="border-b border-line/60">
                   <td className="py-2 pr-4 text-left">{y.year}</td>
                   <td className="py-2 pr-4">{fmtFlux(y.flux)}</td>
+                  {state.pa && <td className="py-2 pr-4">{y.pa > 0 ? fmtFlux(y.pa) : "—"}</td>}
                   <td className="py-2 pr-4">{fmtFlux(y.cumulativeFlux)}</td>
                   <td className="py-2 pr-4">{fmtPrice(y.price, c)}</td>
                   <td className={`py-2 pr-4 ${y.net >= 0 ? "" : "text-loss"}`}>{fmtMoney(y.net, c)}</td>
@@ -136,6 +144,7 @@ export function ProjectionsTab({ state, update, market }: Props) {
             </tbody>
           </table>
         </div>
+        <ParallelAssetsNote state={state} />
       </div>
     </div>
   );

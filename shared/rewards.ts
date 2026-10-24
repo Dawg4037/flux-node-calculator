@@ -97,6 +97,43 @@ export function dailyFluxPerNode(tier: Tier, height: number, enabledInTier: numb
 }
 
 // ---------------------------------------------------------------------------
+// Parallel assets
+// ---------------------------------------------------------------------------
+
+/**
+ * Parallel assets: FLUX tokens on other chains (Kadena, Ethereum, BSC, Tron, Solana, Avalanche,
+ * Algorand, Polygon, Base — 9 active as of Oct 2026). Each active asset pays an extra 10% of every
+ * node payout, on its own chain. Rewards accrue until claimed manually (Zelcore → Fusion →
+ * Parallel Mining Claim), and each claim costs a network fee. Flux's PoUW v2 paper projects them
+ * mined out by about 2028.
+ */
+export interface ParallelAssets {
+  /** Number of active parallel assets. */
+  count: number;
+  /** Value of one parallel-asset FLUX relative to native FLUX, in % (100 = same price). */
+  valuePct: number;
+  /** Height after which parallel assets no longer pay. */
+  endHeight: number;
+}
+
+export const PARALLEL_ASSET_SHARE = 0.1;
+export const DEFAULT_PARALLEL_ASSET_COUNT = 9;
+/** Projected end used by default (start of 2028, per the PoUW v2 paper). Likely to come earlier. */
+export const DEFAULT_PARALLEL_ASSET_END = "2028-01-01";
+
+/** FLUX-equivalent parallel-asset reward per 1 FLUX of native reward, while they are active. */
+export function parallelAssetMultiplier(pa: ParallelAssets | undefined): number {
+  if (!pa) return 0;
+  const count = Number.isFinite(pa.count) ? Math.min(20, Math.max(0, Math.floor(pa.count))) : 0;
+  return count * PARALLEL_ASSET_SHARE;
+}
+
+/** Converts a calendar date to an estimated block height, from a known height at a known time. */
+export function heightAtTime(targetMs: number, knownHeight: number, knownAtMs: number): number {
+  return Math.round(knownHeight + (targetMs - knownAtMs) / (BLOCK_TIME_SECONDS * 1000));
+}
+
+// ---------------------------------------------------------------------------
 // Projections and ROI
 // ---------------------------------------------------------------------------
 
@@ -123,18 +160,26 @@ export interface ProjectionInput {
   collateralPrice: number;
   /** Count the collateral purchase as capital to recover in break-even. */
   includeCollateralInBreakEven: boolean;
+  /** Parallel-asset rewards to add on top of native FLUX; omit to exclude them. */
+  parallelAssets?: ParallelAssets;
 }
 
 export interface ProjectionMonth {
   month: number; // 1-based
   startHeight: number;
+  /** Native FLUX per tier. */
   flux: PerTier<number>;
+  /** Native FLUX, all tiers. */
   fluxTotal: number;
+  /** Parallel-asset rewards, in FLUX-equivalent tokens (before applying their relative value). */
+  paFlux: number;
   price: number;
+  /** Native + parallel-asset revenue. */
   revenue: number;
   cost: number;
   net: number;
   cumulativeFlux: number;
+  cumulativePaFlux: number;
   cumulativeNet: number;
 }
 
@@ -145,6 +190,7 @@ export interface ProjectionResult {
   /** First month in which cumulative net profit covers the capital; null if not within the horizon. */
   breakEvenMonth: number | null;
   totalFlux: number;
+  totalPaFlux: number;
   totalNet: number;
 }
 
@@ -182,8 +228,13 @@ export function project(input: ProjectionInput): ProjectionResult {
     0,
   );
 
+  const paMultiplier = parallelAssetMultiplier(input.parallelAssets);
+  const paValue = clamp(input.parallelAssets?.valuePct ?? 100, 0, 200) / 100;
+  const paEnd = input.parallelAssets?.endHeight ?? 0;
+
   const out: ProjectionMonth[] = [];
   let cumulativeFlux = 0;
+  let cumulativePaFlux = 0;
   let cumulativeNet = 0;
   let breakEvenMonth: number | null = null;
 
@@ -200,10 +251,14 @@ export function project(input: ProjectionInput): ProjectionResult {
     }
 
     const fluxTotal = flux.cumulus + flux.nimbus + flux.stratus;
+    // Share of this month's blocks before parallel assets end.
+    const paActive = paMultiplier > 0 ? clamp((paEnd - startHeight) / BLOCKS_PER_MONTH, 0, 1) : 0;
+    const paFlux = fluxTotal * paMultiplier * paActive;
     const price = startPrice * Math.pow(1 + priceChange, yearsMid);
-    const revenue = fluxTotal * price;
+    const revenue = (fluxTotal + paFlux * paValue) * price;
     const net = revenue - monthlyCost;
     cumulativeFlux += fluxTotal;
+    cumulativePaFlux += paFlux;
     cumulativeNet += net;
     if (breakEvenMonth === null && capital > 0 && cumulativeNet >= capital) breakEvenMonth = m + 1;
 
@@ -212,11 +267,13 @@ export function project(input: ProjectionInput): ProjectionResult {
       startHeight,
       flux,
       fluxTotal,
+      paFlux,
       price,
       revenue,
       cost: monthlyCost,
       net,
       cumulativeFlux,
+      cumulativePaFlux,
       cumulativeNet,
     });
   }
@@ -229,6 +286,7 @@ export function project(input: ProjectionInput): ProjectionResult {
     capital,
     breakEvenMonth,
     totalFlux: cumulativeFlux,
+    totalPaFlux: cumulativePaFlux,
     totalNet: cumulativeNet,
   };
 }
