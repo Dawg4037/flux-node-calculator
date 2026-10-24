@@ -1,0 +1,57 @@
+# Plan
+
+## Reward model (PoUW v2)
+
+- 30-second blocks → 2,880 blocks per day.
+- Each block pays one node in each tier, so for one node:
+  `FLUX/day = tier reward per block × 2,880 ÷ enabled nodes in that tier`
+- Per-block rewards at PoUW v2 launch: Cumulus 1, Nimbus 3.5, Stratus 9, Foundation 0.5 (14 total).
+- Reward drops 10% every 1,051,200 blocks; the tier split stays fixed.
+- From block 3,071,200 (late Oct 2026): Cumulus 0.9, Nimbus 3.15, Stratus 8.1, Foundation 0.45.
+- Rewards are computed from block height, never hardcoded per period.
+- Collateral (confirmed): Cumulus 1,000 / Nimbus 12,500 / Stratus 40,000 FLUX.
+- Progressive Node Rewards (FluxCloud revenue share) are **out of scope for v1** — no published formula. The UI says so explicitly.
+
+## Architecture
+
+One container on FluxCloud: a small backend that serves the frontend and a cached API.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/network` | Block height, enabled nodes per tier, current per-block rewards, next reduction height and ETA |
+| `GET /api/price` | FLUX price in several fiat currencies, cached server-side |
+| `GET /api/lookup/:address` | Nodes for a payment address, last payout, next payout estimate, recent reward history |
+
+- **Stateless:** FluxCloud runs multiple instances; each uses only an in-memory cache.
+- **Visitors never call third parties directly** (privacy, rate limits, no keys in the browser).
+- **Node IPs are never exposed** in lookup results.
+
+## Price source (proposed, not final)
+
+- Primary: median FLUX/USDT from 2–3 exchange public tickers (no key, no monthly cap).
+- Fiat conversion: free daily FX feed for EUR/GBP/CAD.
+- Fallback: CoinGecko Demo on its own key (separate from the personal dashboard), 15–30 min refresh, attribution shown.
+- Refresh every 15 minutes.
+
+## Security requirements
+
+- Non-root user, minimal base image, read-only filesystem.
+- Headers: Content-Security-Policy, X-Content-Type-Options, frame-ancestors/X-Frame-Options, Referrer-Policy, Permissions-Policy; no server version disclosure.
+- Strict input validation on addresses; per-IP rate limiting on lookup.
+- Timeouts, retries with backoff, and stale-cache fallback on every upstream call.
+- Pinned dependencies; automated rebuild when the base image updates; dependency and image scanning in CI.
+
+## Build order
+
+1. Verify open questions (see FLUX-API.md) and write reward-math test cases.
+2. Backend: network, price, lookup endpoints with caching.
+3. Frontend: the three v1 features; keep A/B scenario comparison and shareable URLs.
+4. Hardening and tests; check results against Flux's official calculator.
+5. Deploy to FluxCloud.
+
+## Open decisions
+
+- Price source (proposal above).
+- Tech stack.
+- License.
+- Domain.
