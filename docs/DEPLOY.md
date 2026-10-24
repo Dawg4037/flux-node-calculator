@@ -49,7 +49,26 @@ Review the price, sign in Zelcore, and pay.
 
 ## Releasing an update
 
-1. Bump `version` in `package.json`.
-2. Build and push with the new tag.
-3. In FluxCloud, update the app spec's image to the new tag and sign the update.
-4. Merge `main` into `release` so the branch matches what's live.
+Images are built and pushed by GitHub Actions (`.github/workflows/docker-publish.yml`) whenever `release` is updated. The image tag comes from `version` in `package.json`, and an existing version is never overwritten.
+
+1. Bump `version` in `package.json` on `main` (e.g. `0.1.1` → `0.1.2`) and commit.
+2. Merge `main` into `release` and push:
+   ```sh
+   git checkout release
+   git merge main
+   git push
+   git checkout main
+   ```
+3. Wait for the **Publish Docker image** run under the repo's Actions tab to finish (about 2–4 minutes). It runs the tests first; a failure stops the publish.
+4. In FluxCloud: Manage → Subscription → Update → set the image to the new tag, turn Renewal off, and sign.
+
+Rollback: set the image back to the previous tag in step 4.
+
+### One-time setup for the workflow
+
+Add two repository secrets under Settings → Secrets and variables → Actions:
+
+- `DOCKERHUB_USERNAME`: `dawg4037`
+- `DOCKERHUB_TOKEN`: a Docker Hub access token (Docker Hub → Account settings → Personal access tokens) with **Read & Write** scope only.
+
+To publish without pushing to `release` (e.g. to retry), use Actions → Publish Docker image → Run workflow.
