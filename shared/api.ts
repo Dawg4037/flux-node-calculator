@@ -60,10 +60,33 @@ export interface LookupHistory {
   projectedFlux: number;
 }
 
+/** A node on Flux's DOS list: not paid until it's restarted. */
+export interface DosNode {
+  tier: Tier;
+  collateralRef: string;
+  /** Blocks until it can be started again (0 = now). */
+  eligibleInBlocks: number;
+  eligibleAt: string;
+}
+
+/** A node that has been started but isn't confirmed yet. */
+export interface StartingNode {
+  tier: Tier;
+  collateralRef: string;
+  /** Blocks left to confirm before the start lapses. */
+  expiresInBlocks: number;
+  expiresAt: string;
+}
+
 export interface LookupResponse {
   address: string;
   height: number;
+  /** Confirmed nodes (being paid). */
   nodes: LookupNode[];
+  /** Nodes on the DOS list. Null if the list couldn't be loaded. */
+  dosNodes: DosNode[] | null;
+  /** Nodes started but not yet confirmed. Null if the list couldn't be loaded. */
+  startingNodes: StartingNode[] | null;
   totals: {
     nodes: PerTier<number>;
     collateralFlux: number;

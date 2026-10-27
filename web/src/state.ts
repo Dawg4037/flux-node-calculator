@@ -7,9 +7,10 @@ import {
   FLUX_ADDRESS_RE,
   TIERS,
   type PerTier,
+  type Tier,
 } from "../../shared/rewards.ts";
 
-export const TABS = ["earnings", "projections", "lookup"] as const;
+export const TABS = ["earnings", "projections", "next", "lookup"] as const;
 export type Tab = (typeof TABS)[number];
 
 export interface Setup {
@@ -42,6 +43,14 @@ export interface AppState {
   paValue: number;
   /** Projected end date, YYYY-MM-DD. */
   paEnd: string;
+  /** Next node planner: FLUX already saved toward collateral. */
+  nnSaved: number;
+  /** Next node planner: sell rewards to pay running costs. */
+  nnSell: boolean;
+  /** Next node planner: tier to keep buying. */
+  nnTier: Tier;
+  /** Next node planner: plan length in years. */
+  nnYears: number;
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -62,6 +71,10 @@ export const DEFAULT_STATE: AppState = {
   paCount: DEFAULT_PARALLEL_ASSET_COUNT,
   paValue: 100,
   paEnd: DEFAULT_PARALLEL_ASSET_END,
+  nnSaved: 0,
+  nnSell: true,
+  nnTier: "cumulus",
+  nnYears: 5,
 };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -121,6 +134,10 @@ export function parseState(search: string): AppState {
     paCount: readNum(p, "pac", d.paCount, 0, 20, true),
     paValue: readNum(p, "pav", d.paValue, 0, 200),
     paEnd: validDate(p.get("pae")) ?? d.paEnd,
+    nnSaved: readNum(p, "nsv", d.nnSaved, 0, 1e9),
+    nnSell: p.get("nsl") !== "0",
+    nnTier: (TIERS as readonly string[]).includes(p.get("ntr") ?? "") ? (p.get("ntr") as Tier) : d.nnTier,
+    nnYears: readNum(p, "nyr", d.nnYears, 1, 20, true),
   };
 }
 
@@ -145,6 +162,10 @@ export function serializeState(s: AppState): string {
   if (s.paCount !== DEFAULT_STATE.paCount) p.set("pac", String(s.paCount));
   if (s.paValue !== DEFAULT_STATE.paValue) p.set("pav", String(s.paValue));
   if (s.paEnd !== DEFAULT_STATE.paEnd) p.set("pae", s.paEnd);
+  if (s.nnSaved) p.set("nsv", String(s.nnSaved));
+  if (!s.nnSell) p.set("nsl", "0");
+  if (s.nnTier !== DEFAULT_STATE.nnTier) p.set("ntr", s.nnTier);
+  if (s.nnYears !== DEFAULT_STATE.nnYears) p.set("nyr", String(s.nnYears));
   return p.toString();
 }
 

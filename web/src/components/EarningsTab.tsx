@@ -159,7 +159,7 @@ function Results({
 export function EarningsTab({ state, update, market }: Props) {
   const c = state.currency;
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
       <div className="space-y-6">
         <p className="text-sm text-muted">
           Enter how many nodes you run and what each one costs you per month. The costs filled in are examples.

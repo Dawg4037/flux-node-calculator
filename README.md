@@ -4,7 +4,8 @@ A public FluxNode reward calculator, hosted on FluxCloud.
 
 - **Earnings and ROI** — nodes and running costs in; FLUX per day/month/year, net profit, yearly reward rate, and break-even out. Compare two setups side by side.
 - **Projections** — month-by-month earnings across the scheduled 10% reward reductions, with network-size and low/middle/high price assumptions.
-- **Node lookup** — enter a payment address to see your nodes, queue position, next and last payout, and the last 30 days of rewards received vs. expected.
+- **Next node** — how long until your rewards pay for another node's collateral, per tier, and what happens if you keep reinvesting (year by year).
+- **Node lookup** — enter a payment address to see your nodes and their health (confirmed, on the DOS list, or starting), queue position, next and last payout, and the last 30 days of rewards received vs. expected.
 
 Every setup is stored in the URL, so a calculation can be shared as a link.
 

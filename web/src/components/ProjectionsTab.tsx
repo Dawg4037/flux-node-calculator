@@ -49,7 +49,7 @@ export function ProjectionsTab({ state, update, market }: Props) {
   const breakEven = (m: number | null) => (m === null ? `not within ${state.years} years` : m === 0 ? "immediately" : `after ${fmtMonths(m)}`);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
       <div className="space-y-5">
         <p className="text-sm text-muted">
           Uses the nodes and costs from the Earnings and ROI tab. Each year compounds the changes below.

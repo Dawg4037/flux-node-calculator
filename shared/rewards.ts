@@ -326,3 +326,167 @@ export function totalAprPct(tier: Tier, height: number, enabledInTier: number, p
 
 /** Valid transparent Flux address (t1… or t3…, 35 base58 characters). */
 export const FLUX_ADDRESS_RE = /^t[13][1-9A-HJ-NP-Za-km-z]{33}$/;
+
+// ---------------------------------------------------------------------------
+// Next node planner
+// ---------------------------------------------------------------------------
+
+export interface NextNodeInput {
+  startHeight: number;
+  /** Planning horizon in months (1–240). */
+  months: number;
+  yourNodes: PerTier<number>;
+  networkNodes: PerTier<number>;
+  networkGrowthPctPerYear: number;
+  startPrice: number;
+  priceChangePctPerYear: number;
+  /** Running cost per node per month, in the display currency. */
+  monthlyCostPerNode: PerTier<number>;
+  /** Sell rewards to pay running costs (otherwise costs are paid from other income). */
+  sellToCoverCosts: boolean;
+  /** FLUX already saved toward collateral. */
+  savedFlux: number;
+  /** Tier to save for. */
+  target: Tier;
+  /** After each purchase, keep saving for another node of the same tier. */
+  reinvest: boolean;
+  /** Parallel assets counted toward savings (at their relative value) while they last. */
+  parallelAssets?: ParallelAssets;
+}
+
+export interface NextNodeMilestone {
+  /** Months from now, fractional (e.g. 7.4). */
+  month: number;
+  /** Your nodes after this purchase. */
+  nodesAfter: PerTier<number>;
+  /** FLUX per day after this purchase (native + parallel assets while active). */
+  dailyFluxAfter: number;
+}
+
+export interface NextNodeYear {
+  /** 1-based year of the plan. */
+  year: number;
+  /** Nodes bought during this year. */
+  added: number;
+  /** Your nodes at the end of the year. */
+  nodes: PerTier<number>;
+  /** FLUX per day at the end of the year (native + parallel assets while active). */
+  dailyFlux: number;
+}
+
+export interface NextNodeResult {
+  milestones: NextNodeMilestone[];
+  /** Summary at the end of each full year of the plan. */
+  years: NextNodeYear[];
+  /** FLUX saved per month at the start (rewards minus FLUX sold for costs). */
+  monthlySavingsNow: number;
+  /** FLUX still needed for the first node, after what's already saved. */
+  neededNow: number;
+}
+
+/**
+ * Month-by-month savings toward collateral. Rewards accrue each month (native, plus parallel
+ * assets at their relative value while active); if `sellToCoverCosts`, enough FLUX is sold at that
+ * month's price to pay running costs. When savings reach the target tier's collateral a node is
+ * bought; with `reinvest`, saving continues and the new node earns from the next month.
+ */
+export function planNextNodes(input: NextNodeInput): NextNodeResult {
+  const months = Math.round(clamp(input.months, 1, 240));
+  const growth = clamp(input.networkGrowthPctPerYear, -99, 1000) / 100;
+  const priceChange = clamp(input.priceChangePctPerYear, -99, 10000) / 100;
+  const startPrice = clamp(input.startPrice, 0, 1e9);
+  const need = COLLATERAL[input.target];
+  const paMultiplier = parallelAssetMultiplier(input.parallelAssets);
+  const paValue = clamp(input.parallelAssets?.valuePct ?? 100, 0, 200) / 100;
+  const paEnd = input.parallelAssets?.endHeight ?? 0;
+
+  const nodes: PerTier<number> = {
+    cumulus: Math.max(0, Math.floor(input.yourNodes.cumulus || 0)),
+    nimbus: Math.max(0, Math.floor(input.yourNodes.nimbus || 0)),
+    stratus: Math.max(0, Math.floor(input.yourNodes.stratus || 0)),
+  };
+  let balance = Math.max(0, input.savedFlux || 0);
+  const milestones: NextNodeMilestone[] = [];
+  const years: NextNodeYear[] = [];
+  let addedThisYear = 0;
+  let monthlySavingsNow = 0;
+
+  const networkAt = (t: Tier, yearsMid: number) =>
+    Math.max(input.networkNodes[t] * Math.pow(1 + growth, yearsMid), nodes[t], 1);
+
+  const dailyAt = (height: number, yearsMid: number) => {
+    const paActive = paMultiplier > 0 && height < paEnd ? paMultiplier * paValue : 0;
+    return TIERS.reduce(
+      (sum, t) => sum + (nodes[t] * tierBlockReward(t, height) * BLOCKS_PER_DAY * (1 + paActive)) / networkAt(t, yearsMid),
+      0,
+    );
+  };
+
+  for (let m = 0; m < months; m++) {
+    const startHeight = input.startHeight + m * BLOCKS_PER_MONTH;
+    const yearsMid = (m + 0.5) / 12;
+
+    let earned = 0;
+    for (const t of TIERS) {
+      if (nodes[t] === 0) continue;
+      earned += (tierPayoutForRange(t, startHeight, BLOCKS_PER_MONTH) * nodes[t]) / networkAt(t, yearsMid);
+    }
+    const paActive = paMultiplier > 0 ? clamp((paEnd - startHeight) / BLOCKS_PER_MONTH, 0, 1) : 0;
+    earned *= 1 + paMultiplier * paActive * paValue;
+
+    const price = startPrice * Math.pow(1 + priceChange, yearsMid);
+    const cost = TIERS.reduce((sum, t) => sum + nodes[t] * Math.max(0, input.monthlyCostPerNode[t] || 0), 0);
+    const sold = input.sellToCoverCosts && price > 0 ? cost / price : 0;
+    const net = earned - sold;
+    if (m === 0) monthlySavingsNow = net;
+
+    if (balance >= need && m === 0) {
+      // Already have enough before any saving.
+      milestones.push({ month: 0, nodesAfter: { ...nodes, [input.target]: nodes[input.target] + 1 }, dailyFluxAfter: 0 });
+      balance -= need;
+      nodes[input.target]++;
+      milestones[milestones.length - 1]!.dailyFluxAfter = dailyAt(startHeight, yearsMid);
+      if (!input.reinvest) break;
+    }
+
+    if (net > 0 && balance + net >= need) {
+      // Point within the month where savings cross the collateral amount.
+      const fraction = clamp((need - balance) / net, 0, 1);
+      balance = balance + net - need;
+      nodes[input.target]++;
+      milestones.push({
+        month: m + fraction,
+        nodesAfter: { ...nodes },
+        dailyFluxAfter: dailyAt(startHeight + fraction * BLOCKS_PER_MONTH, yearsMid),
+      });
+      if (!input.reinvest) break;
+      // Very large savings can cover more than one node in a month.
+      while (balance >= need && milestones.length < 10_000) {
+        balance -= need;
+        nodes[input.target]++;
+        milestones.push({ month: m + 1, nodesAfter: { ...nodes }, dailyFluxAfter: dailyAt(startHeight + BLOCKS_PER_MONTH, yearsMid) });
+      }
+    } else {
+      balance = Math.max(0, balance + net);
+    }
+
+    if ((m + 1) % 12 === 0) {
+      const year = (m + 1) / 12;
+      const added = milestones.length - addedThisYear;
+      addedThisYear = milestones.length;
+      years.push({
+        year,
+        added,
+        nodes: { ...nodes },
+        dailyFlux: dailyAt(input.startHeight + (m + 1) * BLOCKS_PER_MONTH, year),
+      });
+    }
+  }
+
+  return {
+    milestones,
+    years,
+    monthlySavingsNow,
+    neededNow: Math.max(0, need - Math.max(0, input.savedFlux || 0)),
+  };
+}

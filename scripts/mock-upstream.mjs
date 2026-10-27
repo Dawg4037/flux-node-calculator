@@ -4,7 +4,8 @@
 //   node scripts/mock-upstream.mjs            # listens on 127.0.0.1:9999
 //   FLUX_API_BASE_URL=http://127.0.0.1:9999 COINGECKO_BASE_URL=http://127.0.0.1:9999/cg npm start
 //
-// Demo address with nodes: t3c4EfxLoXXSRZCRnPRF3RpjPi9mBzF5yoJ
+// Demo address with nodes: t3c4EfxLoXXSRZCRnPRF3RpjPi9mBzF5yoJ (6 confirmed, 1 on the DOS list, 1 starting)
+// Address with only a DOS node: t1JSp9NEoQBMv4CbxHdxaU699j5UNHDrgyX
 import { createServer } from "node:http";
 
 const HEIGHT = 3_063_554;
@@ -57,6 +58,13 @@ const routes = {
     ipv4: 2512, ipv6: 0, onion: 0,
   },
   "/daemon/getblocksubsidy": { miner: 14 },
+  "/daemon/getdoslist": [
+    { collateral: `COutPoint(${"d1".repeat(32)}, 0)`, added_height: HEIGHT - 300, payment_address: DEMO, eligible_in: 180, amount: "12500.00" },
+    { collateral: `COutPoint(${"d2".repeat(32)}, 1)`, added_height: HEIGHT - 400, payment_address: "t1JSp9NEoQBMv4CbxHdxaU699j5UNHDrgyX", eligible_in: 60, amount: "40000.00" },
+  ],
+  "/daemon/getstartlist": [
+    { collateral: `COutPoint(${"e1".repeat(32)}, 0)`, added_height: HEIGHT - 20, payment_address: DEMO, expires_in: 170, amount: "1000.00" },
+  ],
 };
 
 createServer((req, res) => {

@@ -25,6 +25,10 @@ Measured block time: 30.01 s average over 2,880 blocks.
 | `GET /daemon/viewdeterministicfluxnodelist` (unfiltered) | 6,832 nodes, ~4.2 MB, ~1.2 s. Avoid per request. |
 | `GET /daemon/getaddressdeltas?address=&start=&end=` | Array of `{address, blockindex, height, index, satoshis, txid}`. Node rewards have **`blockindex: 0`** (coinbase) and `satoshis` equal to the tier's per-block reward (e.g. 900,000,000 for Stratus at 14 FLUX/block). |
 | `GET /daemon/fluxnodecurrentwinner` | Current winner per tier; the winner is `rank: 0` in the list. |
+| `GET /daemon/getdoslist` | Nodes on the DOS list (not paid). Fields: `collateral`, `added_height`, `payment_address`, `eligible_in` (blocks until it can be started again), `amount`. No tier field: tier comes from `amount`. ~8 entries (Oct 2026). |
+| `GET /daemon/getstartlist` | Nodes started but not yet confirmed. Fields: `collateral`, `added_height`, `payment_address`, `expires_in` (blocks left to confirm), `amount`. ~1 entry (Oct 2026). |
+
+Both lists are small, so the server fetches them with each network refresh and filters by exact payment address per lookup. DOS and starting nodes are not in the confirmed list. Per the project owner, a node lands on the DOS list for one of two reasons: incorrect collateral information, or the daemon not being synced.
 
 `rank` is the position **within the tier's payment queue**: rank 0 is paid next, and `last_paid_height` rises by one per rank. Next payout ≈ `(rank + 1) × 30 s`.
 

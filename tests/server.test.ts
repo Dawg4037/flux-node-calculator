@@ -42,6 +42,7 @@ const node = (addr: string, tier: string, rank: number, extra: object = {}) => (
 });
 
 interface MockState {
+  failLists?: boolean;
   calls: string[];
   fluxStatus: "success" | "error";
   cgHeaders: Record<string, string> | null;
@@ -59,10 +60,21 @@ function mockFetch(state: MockState): typeof fetch {
     }
     const ok = (data: unknown) => json({ status: state.fluxStatus, data });
     const path = url.replace("https://flux.test", "");
+    if (state.failLists && /getdoslist|getstartlist/.test(path)) return json({ status: "error", data: { code: 500 } });
     if (path === "/daemon/getblockcount") return ok(HEIGHT);
     if (path === "/daemon/getfluxnodecount")
       return ok({ "cumulus-enabled": 3333, "nimbus-enabled": 1663, "stratus-enabled": 1836, "basic-enabled": 3333, "super-enabled": 1663, "bamf-enabled": 1836 });
     if (path === "/daemon/getblocksubsidy") return ok({ miner: 14 });
+    if (path === "/daemon/getdoslist")
+      return ok([
+        { collateral: `COutPoint(${"a".repeat(64)}, 0)`, added_height: HEIGHT - 10, payment_address: ADDR, eligible_in: 120, amount: "12500.00" },
+        { collateral: `COutPoint(${"b".repeat(64)}, 1)`, added_height: HEIGHT - 10, payment_address: OTHER, eligible_in: 50, amount: "1000.00" },
+        { collateral: "garbage", payment_address: ADDR, eligible_in: 5, amount: "1000.00" },
+      ]);
+    if (path === "/daemon/getstartlist")
+      return ok([
+        { collateral: `COutPoint(${"c".repeat(64)}, 2)`, added_height: HEIGHT - 5, payment_address: ADDR, expires_in: 170, amount: "1000.00" },
+      ]);
     if (path.startsWith("/daemon/viewdeterministicfluxnodelist"))
       return ok([node(ADDR, "STRATUS", 0), node(ADDR, "NIMBUS", 40), node(OTHER, "STRATUS", 5)]);
     if (path.startsWith("/daemon/getaddressdeltas"))
@@ -185,6 +197,35 @@ describe("GET /api/lookup/:address", () => {
     await app.inject(`/api/lookup/${ADDR}`);
     const limited = await app.inject(`/api/lookup/${ADDR}`);
     expect(limited.statusCode).toBe(429);
+  });
+});
+
+describe("node health", () => {
+  it("adds this address's DOS and starting nodes, exact matches only", async () => {
+    const { app } = await setup();
+    const body = (await app.inject(`/api/lookup/${ADDR}`)).json<LookupResponse>();
+    expect(body.dosNodes).toHaveLength(1);
+    expect(body.dosNodes![0]).toMatchObject({ tier: "nimbus", eligibleInBlocks: 120 });
+    expect(body.dosNodes![0]!.collateralRef).toBe("aaaaaaaa…aaaaaa:0");
+    expect(body.startingNodes).toHaveLength(1);
+    expect(body.startingNodes![0]).toMatchObject({ tier: "cumulus", expiresInBlocks: 170 });
+    // Confirmed nodes are unchanged.
+    expect(body.nodes).toHaveLength(2);
+  });
+
+  it("returns DOS nodes even when an address has no confirmed nodes", async () => {
+    const { app } = await setup();
+    const body = (await app.inject(`/api/lookup/${OTHER}`)).json<LookupResponse>();
+    expect(body.dosNodes).toHaveLength(1);
+    expect(body.dosNodes![0]!.tier).toBe("cumulus");
+  });
+
+  it("reports the lists as unavailable rather than empty when they fail", async () => {
+    const { app } = await setup({ failLists: true });
+    const body = (await app.inject(`/api/lookup/${ADDR}`)).json<LookupResponse>();
+    expect(body.dosNodes).toBeNull();
+    expect(body.startingNodes).toBeNull();
+    expect(body.nodes).toHaveLength(2);
   });
 });
 

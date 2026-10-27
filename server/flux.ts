@@ -1,5 +1,12 @@
 /** Flux API access: shared network snapshot and per-address node lookup. */
-import type { LookupHistory, LookupNode, LookupResponse, NetworkResponse } from "../shared/api.ts";
+import type {
+  DosNode,
+  LookupHistory,
+  LookupNode,
+  LookupResponse,
+  NetworkResponse,
+  StartingNode,
+} from "../shared/api.ts";
 import {
   BLOCK_TIME_SECONDS,
   BLOCKS_PER_DAY,
@@ -30,6 +37,33 @@ const isoFromEpoch = (v: unknown): string | null => {
   return n && n > 0 ? new Date(n * 1000).toISOString() : null;
 };
 
+/** Tier from a collateral amount (the DOS and start lists have no tier field). */
+function tierFromAmount(v: unknown): Tier | null {
+  const n = toNum(v);
+  return TIERS.find((t) => n !== null && Math.abs(COLLATERAL[t] - n) < 0.5) ?? null;
+}
+
+/** "COutPoint(<txid>, <n>)" or a bare txid → "abcd1234…ef5678:n". */
+function shortCollateral(txhash: string, outidx: number | null): string {
+  return txhash.length > 16 ? `${txhash.slice(0, 8)}…${txhash.slice(-6)}:${outidx ?? 0}` : txhash;
+}
+function parseOutpoint(v: unknown): { txid: string; n: number } | null {
+  const m = /COutPoint\(([0-9a-fA-F]{64}),\s*(\d+)\)/.exec(String(v ?? ""));
+  return m ? { txid: m[1]!, n: Number(m[2]) } : null;
+}
+
+/** An entry from the DOS or start list, reduced to what lookups need. */
+interface ListEntry {
+  paymentAddress: string;
+  tier: Tier;
+  collateralRef: string;
+  /** `eligible_in` (DOS) or `expires_in` (start), in blocks, as of `heightAtFetch`. */
+  blocks: number;
+}
+
+/** DOS/start lists older than this are treated as unavailable. */
+const LISTS_MAX_AGE_MS = 10 * 60_000;
+
 /** Map tier names, including the legacy BASIC/SUPER/BAMF names. */
 function parseTier(v: unknown): Tier | null {
   const s = String(v ?? "").toUpperCase();
@@ -44,6 +78,7 @@ export class FluxClient {
   private network: NetworkResponse | null = null;
   private refreshing: Promise<void> | null = null;
   private readonly lookupCache = new Map<string, { at: number; value: LookupResponse }>();
+  private lists: { at: number; height: number; dos: ListEntry[]; start: ListEntry[] } | null = null;
 
   constructor(
     private readonly baseUrl: string,
@@ -118,6 +153,7 @@ export class FluxClient {
           updatedAt: new Date(fetchedAt).toISOString(),
           stale: false,
         };
+        await this.refreshLists(height);
       } catch (err) {
         if (this.network) this.network = { ...this.network, stale: true };
         this.log.warn({ err: (err as Error).message }, "network refresh failed");
@@ -126,6 +162,58 @@ export class FluxClient {
       }
     })();
     return this.refreshing;
+  }
+
+  // ------------------------------------------------------- DOS / start lists
+
+  /** Fetches the DOS and start lists (both small) so lookups can show node health without extra calls. */
+  private async refreshLists(height: number): Promise<void> {
+    try {
+      const parse = (raw: unknown, field: "eligible_in" | "expires_in"): ListEntry[] => {
+        if (!Array.isArray(raw)) throw new UpstreamError("Bad node list");
+        const out: ListEntry[] = [];
+        for (const e of raw) {
+          if (!isObj(e)) continue;
+          const tier = tierFromAmount(e.amount);
+          const op = parseOutpoint(e.collateral);
+          const address = typeof e.payment_address === "string" ? e.payment_address : "";
+          if (!tier || !op || !FLUX_ADDRESS_RE.test(address)) continue;
+          out.push({
+            paymentAddress: address,
+            tier,
+            collateralRef: shortCollateral(op.txid, op.n),
+            blocks: Math.max(0, toNum(e[field]) ?? 0),
+          });
+        }
+        return out;
+      };
+      const dos = parse(await this.get("/daemon/getdoslist"), "eligible_in");
+      const start = parse(await this.get("/daemon/getstartlist"), "expires_in");
+      this.lists = { at: this.now(), height, dos, start };
+    } catch (err) {
+      this.log.warn({ err: (err as Error).message }, "DOS/start list refresh failed");
+    }
+  }
+
+  /** This address's DOS and starting nodes, with block counts adjusted to the current height. */
+  private healthFor(address: string, height: number): { dos: DosNode[] | null; starting: StartingNode[] | null } {
+    const lists = this.lists;
+    if (!lists || this.now() - lists.at > LISTS_MAX_AGE_MS) return { dos: null, starting: null };
+    const elapsed = Math.max(0, height - lists.height);
+    const at = (blocks: number) => new Date(this.now() + blocks * BLOCK_TIME_SECONDS * 1000).toISOString();
+    const dos = lists.dos
+      .filter((e) => e.paymentAddress === address)
+      .map((e) => {
+        const left = Math.max(0, e.blocks - elapsed);
+        return { tier: e.tier, collateralRef: e.collateralRef, eligibleInBlocks: left, eligibleAt: at(left) };
+      });
+    const starting = lists.start
+      .filter((e) => e.paymentAddress === address)
+      .map((e) => {
+        const left = Math.max(0, e.blocks - elapsed);
+        return { tier: e.tier, collateralRef: e.collateralRef, expiresInBlocks: left, expiresAt: at(left) };
+      });
+    return { dos, starting };
   }
 
   // ----------------------------------------------------------------- lookup
@@ -158,7 +246,7 @@ export class FluxClient {
       nodes.push({
         tier,
         collateralFlux: toNum(raw.amount) ?? COLLATERAL[tier],
-        collateralRef: txhash.length > 16 ? `${txhash.slice(0, 8)}…${txhash.slice(-6)}:${toNum(raw.outidx) ?? 0}` : txhash,
+        collateralRef: shortCollateral(txhash, toNum(raw.outidx)),
         rank,
         queueSize: network.nodes[tier],
         nextPayoutBlocks: nextBlocks,
@@ -193,10 +281,13 @@ export class FluxClient {
       }
     }
 
+    const health = this.healthFor(address, network.height);
     const value: LookupResponse = {
       address,
       height: network.height,
       nodes,
+      dosNodes: health.dos,
+      startingNodes: health.starting,
       totals,
       history,
       updatedAt: new Date(now).toISOString(),

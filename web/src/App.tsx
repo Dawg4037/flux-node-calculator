@@ -4,6 +4,7 @@ import { EarningsTab } from "./components/EarningsTab.tsx";
 import { Header } from "./components/Header.tsx";
 import { LookupTab } from "./components/LookupTab.tsx";
 import { NetworkTable } from "./components/NetworkTable.tsx";
+import { NextNodeTab } from "./components/NextNodeTab.tsx";
 import { ProjectionsTab } from "./components/ProjectionsTab.tsx";
 import { Contribute } from "./components/Contribute.tsx";
 import { Notice } from "./components/ui.tsx";
@@ -16,6 +17,7 @@ const REPO_URL = "https://github.com/Dawg4037/flux-node-calculator";
 const TAB_LABEL: Record<Tab, string> = {
   earnings: "Earnings and ROI",
   projections: "Projections",
+  next: "Next node",
   lookup: "Node lookup",
 };
 
@@ -88,6 +90,8 @@ export function App() {
               <div className="h-64 animate-pulse rounded-md bg-line/30" aria-label="Loading" />
             ) : state.tab === "earnings" ? (
               <EarningsTab state={state} update={update} market={market} />
+            ) : state.tab === "next" ? (
+              <NextNodeTab state={state} update={update} market={market} />
             ) : (
               <ProjectionsTab state={state} update={update} market={market} />
             )}
