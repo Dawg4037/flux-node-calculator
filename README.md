@@ -7,7 +7,7 @@ A public FluxNode reward calculator, hosted on FluxCloud.
 - **Next node** — how long until your rewards pay for another node's collateral, per tier, and what happens if you keep reinvesting (year by year).
 - **Node lookup** — enter a payment address to see your nodes and their health (confirmed, on the DOS list, or starting), queue position, next and last payout, and the last 30 days of rewards received vs. expected.
 
-Every setup is stored in the URL, so a calculation can be shared as a link.
+Every setup is stored in the URL, so a calculation can be shared as a link. A "How the math works" panel explains every calculation with live numbers.
 
 ## How rewards are calculated
 

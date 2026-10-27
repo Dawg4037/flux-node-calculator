@@ -12,13 +12,21 @@ import {
 import { fmtDuration, fmtFlux, fmtInt, fmtPct } from "../format.ts";
 import { paActiveNow, parallelAssetsFor } from "../model.ts";
 import type { AppState } from "../state.ts";
+import { HowItWorksButton } from "./HowItWorks.tsx";
 import { Section, TierSwatch } from "./ui.tsx";
 
 export function NetworkTable({ network, state }: { network: NetworkResponse; state: AppState }) {
   const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
   const pa = paMult > 0 ? parallelAssetsFor(state, { network, price: 0 }) : undefined;
   return (
-    <Section title="Tiers today" aside={`Live from the Flux network`}>
+    <Section
+      title="Tiers today"
+      aside={
+        <>
+          Live from the Flux network. <HowItWorksButton className="text-ink" />
+        </>
+      }
+    >
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="text-muted">

@@ -7,6 +7,7 @@ import { NetworkTable } from "./components/NetworkTable.tsx";
 import { NextNodeTab } from "./components/NextNodeTab.tsx";
 import { ProjectionsTab } from "./components/ProjectionsTab.tsx";
 import { Contribute } from "./components/Contribute.tsx";
+import { HowItWorksButton, HowItWorksProvider } from "./components/HowItWorks.tsx";
 import { Notice } from "./components/ui.tsx";
 import { useTheme } from "./theme.ts";
 import type { Market } from "./model.ts";
@@ -41,6 +42,7 @@ export function App() {
   };
 
   return (
+    <HowItWorksProvider network={network.data} state={state}>
     <div className="min-h-screen">
       <Header
         network={network.data}
@@ -124,6 +126,9 @@ export function App() {
               Report an issue or suggest a feature
             </a>
           </li>
+          <li>
+            <HowItWorksButton />
+          </li>
           <li className="num text-muted">v{__APP_VERSION__}</li>
         </ul>
         <p>
@@ -141,5 +146,6 @@ export function App() {
         </div>
       </footer>
     </div>
+    </HowItWorksProvider>
   );
 }
