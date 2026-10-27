@@ -1,5 +1,5 @@
 name: Suggest a better translation
-description: Wording in Português, Español or Deutsch that's wrong, unclear or unnatural.
+description: Wording in any language other than English that's wrong, unclear or unnatural.
 title: "Translation: "
 labels: [translation]
 body:
@@ -11,6 +11,9 @@ body:
         - Português (Brasil)
         - Español
         - Deutsch
+        - Français
+        - Polski
+        - Русский
     validations:
       required: true
   - type: textarea
