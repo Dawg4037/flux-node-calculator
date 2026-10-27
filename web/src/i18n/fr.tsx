@@ -43,7 +43,8 @@ export const fr: Messages = {
     tablist: "Sections du calculateur",
     loading: "Chargement",
     networkError: "Impossible de joindre le réseau Flux pour le moment. Nouvelle tentative en cours.",
-    priceError: "Impossible de charger le prix du FLUX pour le moment. Nouvelle tentative en cours.",
+    priceError: "Le prix du FLUX n'est pas disponible pour le moment, les montants en devise sont donc masqués. Nouvelle tentative toutes les quelques minutes.",
+    priceNeeded: "Ce calcul a besoin du prix du FLUX, qui n'est pas disponible pour le moment. Il s'affichera dès que le prix sera chargé.",
     runsOnFlux: "Hébergé sur Flux",
     builtBy: (who: N) => <>Créé par {who}</>,
     source: "Code source sur GitHub",
@@ -120,6 +121,7 @@ export const fr: Messages = {
     setupHint: "Le matériel ou toute autre dépense payée une seule fois.",
     collateralPrice: "Prix payé par FLUX pour le collatéral",
     usingToday: "Le prix du jour est utilisé.",
+    noPriceYet: "Le prix du jour n'est pas encore disponible. Saisissez le prix payé ou attendez son chargement.",
     useToday: "Utiliser le prix du jour",
     countCollateral: "Compter l'achat du collatéral dans le seuil de rentabilité",
     countCollateralHint: "Le collatéral reste à vous et peut être débloqué, mais l'acheter reste une dépense.",
@@ -195,6 +197,7 @@ export const fr: Messages = {
     planLength: "Durée du plan",
     yearsUnit: "ans",
     needInput: "Ajoutez vos nœuds dans l'onglet Gains et ROI, ou indiquez le FLUX déjà mis de côté.",
+    priceNeeded: "Vous pouvez aussi désactiver « Vendre des récompenses pour payer les coûts » pour planifier sans lui.",
     saving: (flux: N, sell: boolean) => (
       <>
         Vous mettriez de côté environ {flux} par mois en ce moment

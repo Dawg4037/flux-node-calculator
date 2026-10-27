@@ -42,7 +42,8 @@ export const en = {
     tablist: "Calculator sections",
     loading: "Loading",
     networkError: "Can't reach the Flux network right now. Retrying.",
-    priceError: "Can't load the FLUX price right now. Retrying.",
+    priceError: "The FLUX price isn't available right now, so currency amounts are hidden. Retrying every few minutes.",
+    priceNeeded: "This needs the FLUX price, which isn't available right now. It will show as soon as the price loads.",
     runsOnFlux: "Runs on Flux",
     builtBy: (who: N) => <>Built by {who}</>,
     source: "Source on GitHub",
@@ -117,6 +118,7 @@ export const en = {
     setupHint: "Hardware or anything else you pay once.",
     collateralPrice: "Price you paid per FLUX for collateral",
     usingToday: "Using today's price.",
+    noPriceYet: "Today's price isn't available yet. Enter the price you paid, or wait for it to load.",
     useToday: "Use today's price",
     countCollateral: "Count the collateral purchase in break-even",
     countCollateralHint: "Collateral stays yours and can be unlocked, but buying it is money spent.",
@@ -192,6 +194,7 @@ export const en = {
     planLength: "Plan length",
     yearsUnit: "years",
     needInput: "Add your nodes on the Earnings and ROI tab, or enter FLUX you've already saved.",
+    priceNeeded: "Or turn off “Sell rewards to pay running costs” to plan without it.",
     saving: (flux: N, sell: boolean) => (
       <>
         You'd save about {flux} a month right now{sell ? " after selling enough to pay running costs" : ""}.

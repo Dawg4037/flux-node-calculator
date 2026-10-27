@@ -53,7 +53,8 @@ export const pl: Messages = {
     tablist: "Sekcje kalkulatora",
     loading: "Ładowanie",
     networkError: "Nie można teraz połączyć się z siecią Flux. Ponawiam próbę.",
-    priceError: "Nie można teraz pobrać ceny FLUX. Ponawiam próbę.",
+    priceError: "Cena FLUX jest teraz niedostępna, więc kwoty w walucie są ukryte. Ponawiam co kilka minut.",
+    priceNeeded: "To wymaga ceny FLUX, która jest teraz niedostępna. Pojawi się, gdy tylko cena się wczyta.",
     runsOnFlux: "Działa na Flux",
     builtBy: (who: N) => <>Autor: {who}</>,
     source: "Kod źródłowy na GitHubie",
@@ -129,6 +130,7 @@ export const pl: Messages = {
     setupHint: "Sprzęt lub cokolwiek innego, za co płacisz raz.",
     collateralPrice: "Cena zapłacona za FLUX na zabezpieczenie",
     usingToday: "Używana jest dzisiejsza cena.",
+    noPriceYet: "Dzisiejsza cena nie jest jeszcze dostępna. Wpisz cenę zakupu albo poczekaj, aż się wczyta.",
     useToday: "Użyj dzisiejszej ceny",
     countCollateral: "Wlicz zakup zabezpieczenia do progu rentowności",
     countCollateralHint: "Zabezpieczenie zostaje Twoje i można je odblokować, ale jego zakup to wydane pieniądze.",
@@ -204,6 +206,7 @@ export const pl: Messages = {
     planLength: "Długość planu",
     yearsUnit: "lat",
     needInput: "Dodaj swoje węzły w zakładce Zarobki i ROI albo wpisz zaoszczędzony już FLUX.",
+    priceNeeded: "Możesz też wyłączyć „Sprzedawaj nagrody na koszty utrzymania”, aby planować bez niej.",
     saving: (flux: N, sell: boolean) => (
       <>
         Obecnie odkładasz około {flux} miesięcznie{sell ? " po sprzedaży części nagród na koszty utrzymania" : ""}.

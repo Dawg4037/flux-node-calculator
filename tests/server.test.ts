@@ -19,6 +19,7 @@ const config: Config = {
   lookupRatePerMinute: 3,
   trustProxy: false,
   staticDir: "does-not-exist",
+  version: "test",
 };
 
 const node = (addr: string, tier: string, rank: number, extra: object = {}) => ({
@@ -42,6 +43,8 @@ const node = (addr: string, tier: string, rank: number, extra: object = {}) => (
 });
 
 interface MockState {
+  /** HTTP status CoinGecko answers with (default 200). */
+  cgStatus?: number;
   failLists?: boolean;
   calls: string[];
   fluxStatus: "success" | "error";
@@ -56,6 +59,7 @@ function mockFetch(state: MockState): typeof fetch {
     state.calls.push(url);
     if (url.startsWith("https://cg.test")) {
       state.cgHeaders = (init?.headers as Record<string, string>) ?? null;
+      if (state.cgStatus && state.cgStatus !== 200) return json({ error: "nope" }, state.cgStatus);
       return json({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, last_updated_at: 1792801600 } });
     }
     const ok = (data: unknown) => json({ status: state.fluxStatus, data });
@@ -154,6 +158,36 @@ describe("GET /api/price", () => {
     const before = state.calls.filter((c) => c.startsWith("https://cg.test")).length;
     await app.inject("/api/price");
     expect(state.calls.filter((c) => c.startsWith("https://cg.test")).length).toBe(before);
+  });
+});
+
+describe("price failures", () => {
+  it("reports why the price is missing without exposing the key, and retries sooner", async () => {
+    const { app, price } = await setup({ cgStatus: 429 });
+    expect((await app.inject("/api/price")).statusCode).toBe(503);
+    const health = (await app.inject("/api/health")).json();
+    expect(health.price).toBe(false);
+    expect(health.version).toBe("test");
+    expect(health.priceSource).toMatchObject({ keySet: true, lastError: "HTTP 429", failuresInARow: 1 });
+    expect(JSON.stringify(health)).not.toContain("test-key");
+    const normal = 20 * 60_000;
+    expect(price.nextDelayMs(normal)).toBe(2 * 60_000);
+    await price.refresh();
+    expect(price.nextDelayMs(normal)).toBe(4 * 60_000);
+    await price.refresh();
+    await price.refresh();
+    await price.refresh();
+    expect(price.nextDelayMs(normal)).toBe(normal);
+  });
+
+  it("goes back to the normal interval after a success", async () => {
+    const { price, state } = await setup({ cgStatus: 500 });
+    expect(price.getPrice()).toBeNull();
+    state.cgStatus = 200;
+    await price.refresh();
+    expect(price.getPrice()?.prices.usd).toBe(0.066058);
+    expect(price.status().lastError).toBeNull();
+    expect(price.nextDelayMs(1_200_000)).toBe(1_200_000);
   });
 });
 

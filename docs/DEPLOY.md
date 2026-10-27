@@ -44,7 +44,8 @@ Review the price, sign in Zelcore, and pay.
 
 ## 3. Check it
 
-- `https://<app>.app.runonflux.io/api/health` → `{"ok":true,"network":true,"price":true}` within a minute of starting.
+- `https://<app>.app.runonflux.io/api/health` → `"network":true` and `"price":true` within a minute of starting, plus the `version` that instance runs.
+  If `price` is false, `priceSource.lastError` says why (e.g. `HTTP 429`, `timeout`, `network error (…)`) and `priceSource.keySet` shows whether `COINGECKO_API_KEY` reached the container. After a failed price refresh the server retries in 2, 4, 8 and 16 minutes, then every 20.
 - In the logs, `chain block reward differs from schedule` means the chain's reward no longer matches the coded schedule.
 
 ## Releasing an update

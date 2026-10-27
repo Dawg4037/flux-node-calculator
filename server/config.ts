@@ -38,6 +38,8 @@ export interface Config {
   lookupRatePerMinute: number;
   trustProxy: boolean;
   staticDir: string;
+  /** Release version, baked in at build time. */
+  version: string;
 }
 
 export function loadConfig(): Config {
@@ -54,5 +56,6 @@ export function loadConfig(): Config {
     lookupRatePerMinute: num("LOOKUP_RATE_PER_MINUTE", 10, 1, 120),
     trustProxy: bool("TRUST_PROXY", true),
     staticDir: process.env.STATIC_DIR?.trim() || "dist/public",
+    version: process.env.APP_VERSION ?? "dev",
   };
 }

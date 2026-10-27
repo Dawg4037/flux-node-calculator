@@ -5,7 +5,8 @@ import type { AppState, Setup } from "./state.ts";
 
 export interface Market {
   network: NetworkResponse;
-  price: number;
+  /** FLUX price in the display currency, or null while it isn't available. */
+  price: number | null;
 }
 
 export function runProjection(
@@ -20,11 +21,11 @@ export function runProjection(
     yourNodes: setup.nodes,
     networkNodes: market.network.nodes,
     networkGrowthPctPerYear: opts.growthPct,
-    startPrice: market.price,
+    startPrice: market.price ?? 0,
     priceChangePctPerYear: opts.priceChangePct,
     monthlyCostPerNode: setup.cost,
     upfrontCost: setup.upfront,
-    collateralPrice: state.collateralPrice ?? market.price,
+    collateralPrice: state.collateralPrice ?? market.price ?? 0,
     includeCollateralInBreakEven: state.includeCollateral,
     parallelAssets: parallelAssetsFor(state, market),
   });

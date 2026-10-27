@@ -80,11 +80,16 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
   const apiLimit = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
 
   // --------------------------------------------------------------------- api
-  app.get("/api/health", apiLimit, async () => ({
-    ok: true,
-    network: flux.getNetwork() !== null,
-    price: price.getPrice() !== null,
-  }));
+  app.get("/api/health", apiLimit, async (_req, reply) => {
+    reply.header("cache-control", "no-store");
+    return {
+      ok: true,
+      version: config.version,
+      network: flux.getNetwork() !== null,
+      price: price.getPrice() !== null,
+      priceSource: price.status(),
+    };
+  });
 
   app.get("/api/network", apiLimit, async (_req, reply) => {
     const n = flux.getNetwork();
@@ -164,14 +169,26 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
 
   // ------------------------------------------------------- background tasks
   const timers: NodeJS.Timeout[] = [];
+  let priceTimer: NodeJS.Timeout | undefined;
+  let closing = false;
   if (background) {
     void flux.refreshNetwork();
-    void price.refresh();
     timers.push(setInterval(() => void flux.refreshNetwork(), config.networkRefreshMs));
-    timers.push(setInterval(() => void price.refresh(), config.priceRefreshMs));
     for (const t of timers) t.unref();
+    // Price: normal interval after a success, quick retries after a failure (see PriceClient).
+    const priceLoop = async () => {
+      await price.refresh();
+      if (closing) return;
+      priceTimer = setTimeout(() => void priceLoop(), price.nextDelayMs(config.priceRefreshMs));
+      priceTimer.unref();
+    };
+    void priceLoop();
   }
-  app.addHook("onClose", async () => timers.forEach(clearInterval));
+  app.addHook("onClose", async () => {
+    closing = true;
+    timers.forEach(clearInterval);
+    clearTimeout(priceTimer);
+  });
 
   return { app, flux, price };
 }

@@ -26,7 +26,8 @@ export function App() {
 
   const market: Market | null = useMemo(
     () =>
-      network.data && price.data ? { network: network.data, price: price.data.prices[state.currency] } : null,
+      // The calculator runs on network data alone; without a price, currency amounts are hidden.
+      network.data ? { network: network.data, price: price.data?.prices[state.currency] ?? null } : null,
     [network.data, price.data, state.currency],
   );
 

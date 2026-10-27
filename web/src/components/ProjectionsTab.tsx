@@ -15,7 +15,8 @@ interface Props {
 }
 
 export function ProjectionsTab({ state, update, market }: Props) {
-  const t = useT().projections;
+  const all = useT();
+  const t = all.projections;
   const c = state.currency;
   const months = state.years * 12;
 
@@ -27,6 +28,9 @@ export function ProjectionsTab({ state, update, market }: Props) {
       bull: runProjection(state, state.a, market, opts(state.bull)),
     };
   }, [state, market, months]);
+
+  const price = market.price;
+  if (price === null) return <Notice>{all.app.priceNeeded}</Notice>;
 
   if (!hasNodes(state.a)) {
     return <Notice>{t.needNodes}</Notice>;
@@ -73,7 +77,7 @@ export function ProjectionsTab({ state, update, market }: Props) {
           <NumberField label={t.middle} suffix="%" min={-99} max={1000} value={state.base} onChange={(base) => update({ base })} />
           <NumberField label={t.high} suffix="%" min={-99} max={1000} value={state.bull} onChange={(bull) => update({ bull })} />
           <p className="text-xs text-muted">
-            {t.startFrom(fmtPrice(market.price, c))}
+            {t.startFrom(fmtPrice(price, c))}
           </p>
         </fieldset>
         <div className="border-t border-line pt-5">

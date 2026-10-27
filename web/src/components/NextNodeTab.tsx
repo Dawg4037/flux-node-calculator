@@ -35,7 +35,8 @@ function nodesLabel(n: Record<Tier, number>): string {
 
 export function NextNodeTab({ state, update, market }: Props) {
   const tierSelectId = useId();
-  const t = useT().next;
+  const all = useT();
+  const t = all.next;
   const pa = useMemo(
     () => parallelAssetsFor(state, market),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,7 +49,7 @@ export function NextNodeTab({ state, update, market }: Props) {
       yourNodes: state.a.nodes,
       networkNodes: market.network.nodes,
       networkGrowthPctPerYear: state.growth,
-      startPrice: market.price,
+      startPrice: market.price ?? 0,
       priceChangePctPerYear: state.base,
       monthlyCostPerNode: state.a.cost,
       sellToCoverCosts: state.nnSell,
@@ -124,7 +125,11 @@ export function NextNodeTab({ state, update, market }: Props) {
       </div>
 
       <div className="space-y-8">
-        {!canStart ? (
+        {market.price === null && state.nnSell ? (
+          <Notice>
+            {all.app.priceNeeded} {t.priceNeeded}
+          </Notice>
+        ) : !canStart ? (
           <Notice>{t.needInput}</Notice>
         ) : (
           <>

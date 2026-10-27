@@ -75,9 +75,13 @@ function Results({
   title?: string;
   compact?: boolean;
 }) {
-  const t = useT().earnings;
+  const all = useT();
+  const t = all.earnings;
   const c = state.currency;
   if (!hasNodes(setup)) return <Notice>{t.addNode}</Notice>;
+  // Without today's price, FLUX amounts still work; currency amounts show a dash.
+  const priced = market.price !== null;
+  const money = (v: number) => (priced ? fmtMoney(v, c) : "—");
 
   const flat = runProjection(state, setup, market, { months: 240, priceChangePct: 0, growthPct: 0 });
   const m1 = flat.months[0]!;
@@ -112,15 +116,15 @@ function Results({
         </div>
         <div>
           <dt className="text-sm text-muted">{t.revenue}</dt>
-          <dd className="num text-xl">{fmtMoney(m1.revenue, c)}</dd>
+          <dd className="num text-xl">{money(m1.revenue)}</dd>
         </div>
         <div>
           <dt className="text-sm text-muted">{t.costs}</dt>
-          <dd className="num text-xl">{fmtMoney(m1.cost, c)}</dd>
+          <dd className="num text-xl">{money(m1.cost)}</dd>
         </div>
         <div>
           <dt className="text-sm text-muted">{t.net}</dt>
-          <dd className={`num text-xl font-semibold ${net >= 0 ? "text-gain" : "text-loss"}`}>{fmtMoney(net, c)}</dd>
+          <dd className={`num text-xl font-semibold ${!priced ? "" : net >= 0 ? "text-gain" : "text-loss"}`}>{money(net)}</dd>
         </div>
         <div>
           <dt className="text-sm text-muted">{t.collateralLocked}</dt>
@@ -134,10 +138,16 @@ function Results({
         </div>
         <div>
           <dt className="text-sm text-muted">{t.net12}</dt>
-          <dd className={`num text-xl ${year1Net >= 0 ? "text-gain" : "text-loss"}`}>{fmtMoney(year1Net, c)}</dd>
+          <dd className={`num text-xl ${!priced ? "" : year1Net >= 0 ? "text-gain" : "text-loss"}`}>{money(year1Net)}</dd>
         </div>
       </dl>
 
+      {!priced ? (
+        <div className="mt-6 rounded-md border border-line bg-surface p-4">
+          <p className="text-sm text-muted">{t.breakEvenTitle}</p>
+          <p className="mt-1 text-sm">{all.app.priceNeeded}</p>
+        </div>
+      ) : (
       <div className="mt-6 rounded-md border border-line bg-surface p-4">
         <p className="text-sm text-muted">{t.breakEvenTitle}</p>
         <p className="mt-1 text-xl font-semibold">
@@ -153,6 +163,7 @@ function Results({
           {t.recovering(fmtMoney(flat.capital, c), state.includeCollateral, state.pa)}
         </p>
       </div>
+      )}
     </div>
   );
 }
@@ -172,11 +183,11 @@ export function EarningsTab({ state, update, market }: Props) {
             label={t.collateralPrice}
             suffix={c.toUpperCase()}
             step={0.001}
-            value={state.collateralPrice ?? Number(market.price.toFixed(4))}
+            value={state.collateralPrice ?? Number((market.price ?? 0).toFixed(4))}
             onChange={(n) => update({ collateralPrice: n })}
             hint={
               state.collateralPrice === null ? (
-                t.usingToday
+                market.price === null ? t.noPriceYet : t.usingToday
               ) : (
                 <button type="button" className="underline" onClick={() => update({ collateralPrice: null })}>
                   {t.useToday}

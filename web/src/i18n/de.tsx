@@ -44,7 +44,8 @@ export const de: Messages = {
     tablist: "Bereiche des Rechners",
     loading: "Wird geladen",
     networkError: "Das Flux-Netzwerk ist gerade nicht erreichbar. Neuer Versuch läuft.",
-    priceError: "Der FLUX-Preis kann gerade nicht geladen werden. Neuer Versuch läuft.",
+    priceError: "Der FLUX-Preis ist gerade nicht verfügbar, daher werden Währungsbeträge ausgeblendet. Neuer Versuch alle paar Minuten.",
+    priceNeeded: "Dafür wird der FLUX-Preis benötigt, der gerade nicht verfügbar ist. Er erscheint, sobald er geladen ist.",
     runsOnFlux: "Läuft auf Flux",
     builtBy: (who: N) => <>Entwickelt von {who}</>,
     source: "Quellcode auf GitHub",
@@ -121,6 +122,7 @@ export const de: Messages = {
     setupHint: "Hardware oder alles andere, was du einmal bezahlst.",
     collateralPrice: "Gezahlter Preis pro FLUX für das Collateral",
     usingToday: "Der heutige Preis wird verwendet.",
+    noPriceYet: "Der heutige Preis ist noch nicht verfügbar. Gib den gezahlten Preis ein oder warte, bis er geladen ist.",
     useToday: "Heutigen Preis verwenden",
     countCollateral: "Collateral-Kauf in die Gewinnschwelle einrechnen",
     countCollateralHint: "Das Collateral bleibt deins und kann freigegeben werden, aber der Kauf ist ausgegebenes Geld.",
@@ -196,6 +198,7 @@ export const de: Messages = {
     planLength: "Planlänge",
     yearsUnit: "Jahre",
     needInput: "Trage deine Nodes im Tab Erträge und ROI ein oder gib bereits gespartes FLUX an.",
+    priceNeeded: "Oder schalte „Belohnungen verkaufen, um laufende Kosten zu zahlen“ aus, um ohne ihn zu planen.",
     saving: (flux: N, sell: boolean) => (
       <>
         Du würdest derzeit etwa {flux} pro Monat sparen
