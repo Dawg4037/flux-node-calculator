@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
 import type { LookupResponse, NetworkResponse, PriceResponse } from "../../shared/api.ts";
 
+/** A failed API call. The page shows its own translated message based on `status`. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { headers: { accept: "application/json" } });
   const body = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
-  if (!res.ok) throw new Error(body?.error || `Request failed (${res.status})`);
-  if (!body) throw new Error("Empty response");
+  if (!res.ok) throw new ApiError(body?.error || `Request failed (${res.status})`, res.status);
+  if (!body) throw new ApiError("Empty response", res.status);
   return body;
 }
 

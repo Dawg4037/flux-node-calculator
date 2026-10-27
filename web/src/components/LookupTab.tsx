@@ -9,26 +9,25 @@ import {
   yearRewardPerNode,
   type ParallelAssets,
 } from "../../../shared/rewards.ts";
-import { lookupAddress } from "../api.ts";
+import { ApiError, lookupAddress } from "../api.ts";
 import { fmtFlux, fmtInt, fmtMoney, fmtPct, fmtRelative } from "../format.ts";
+import { useT, type Messages } from "../i18n/index.tsx";
 import { paActiveNow } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { Notice, TierSwatch } from "./ui.tsx";
 
 /** "1 Cumulus node at this address is starting and must confirm in 1h 25m." */
-function startingSentence(starting: StartingNode[]): string {
+function startingSentence(t: Messages["lookup"], starting: StartingNode[]): string {
   const soonest = starting.reduce((a, b) => (a.expiresInBlocks <= b.expiresInBlocks ? a : b));
   const when = fmtRelative(soonest.expiresAt);
-  if (starting.length === 1) {
-    return `1 ${TIER_LABEL[soonest.tier]} node at this address is starting and must confirm ${when}.`;
-  }
+  if (starting.length === 1) return t.startingOne(TIER_LABEL[soonest.tier], when);
   const parts = TIERS.slice()
     .reverse()
-    .map((t) => [t, starting.filter((n) => n.tier === t).length] as const)
+    .map((tier) => [tier, starting.filter((n) => n.tier === tier).length] as const)
     .filter(([, n]) => n > 0)
-    .map(([t, n]) => `${n} ${TIER_LABEL[t]}`)
+    .map(([tier, n]) => `${fmtInt(n)} ${TIER_LABEL[tier]}`)
     .join(", ");
-  return `${starting.length} nodes at this address are starting (${parts}). The first must confirm ${when}.`;
+  return t.startingMany(starting.length, parts, when);
 }
 
 function StatusBadge({ tone, label }: { tone: "gain" | "loss"; label: string }) {
@@ -47,9 +46,11 @@ interface Props {
 }
 
 export function LookupTab({ state, update, price }: Props) {
+  const t = useT().lookup;
   const [input, setInput] = useState(state.address);
   const [result, setResult] = useState<LookupResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // Which message to show, so it follows a language change.
+  const [error, setError] = useState<"invalid" | "tooMany" | "failed" | null>(null);
   const [loading, setLoading] = useState(false);
   const [onlyAttention, setOnlyAttention] = useState(false);
   const ran = useRef(false);
@@ -57,7 +58,7 @@ export function LookupTab({ state, update, price }: Props) {
   const run = async (address: string) => {
     setError(null);
     if (!FLUX_ADDRESS_RE.test(address)) {
-      setError("Enter a full Flux payment address: 35 characters starting with t1 or t3.");
+      setError("invalid");
       return;
     }
     setLoading(true);
@@ -67,7 +68,8 @@ export function LookupTab({ state, update, price }: Props) {
       update({ address });
     } catch (e) {
       setResult(null);
-      setError((e as Error).message);
+      const status = e instanceof ApiError ? e.status : 0;
+      setError(status === 400 ? "invalid" : status === 429 ? "tooMany" : "failed");
     } finally {
       setLoading(false);
     }
@@ -124,7 +126,7 @@ export function LookupTab({ state, update, price }: Props) {
     <div className="space-y-8">
       <form onSubmit={onSubmit} className="max-w-2xl">
         <label htmlFor="addr" className="block text-sm text-muted">
-          Payment address
+          {t.address}
         </label>
         <div className="mt-1 flex flex-col gap-2 sm:flex-row">
           <input
@@ -142,18 +144,18 @@ export function LookupTab({ state, update, price }: Props) {
             disabled={loading}
             className="shrink-0 rounded-md bg-ink px-4 py-2 font-medium whitespace-nowrap text-paper disabled:opacity-60"
           >
-            {loading ? "Looking up…" : "Look up nodes"}
+            {loading ? t.lookingUp : t.lookUp}
           </button>
         </div>
         <p className="mt-1 text-xs text-muted">
-          The address your node rewards are paid to. Lookups only read public chain data.
+          {t.hint}
         </p>
       </form>
 
-      {error && <Notice tone="error">{error}</Notice>}
+      {error && <Notice tone="error">{t[error]}</Notice>}
 
       {result && !anyNodes && (
-        <Notice>No nodes pay to this address. Check that it's the payment address, not the collateral address.</Notice>
+        <Notice>{t.noNodes}</Notice>
       )}
 
       {result && anyNodes && (
@@ -162,27 +164,20 @@ export function LookupTab({ state, update, price }: Props) {
           className={`rounded-md border p-4 ${dos.length > 0 ? "border-loss/60 bg-surface" : "border-line"}`}
         >
           <p className="text-lg">
-            <span className="num font-semibold">{fmtInt(confirmedCount)}</span> confirmed
-            {dos.length > 0 && (
-              <>
-                , <span className="num font-semibold text-loss">{fmtInt(dos.length)}</span> on the DOS list
-              </>
-            )}
-            {starting.length > 0 && (
-              <>
-                , <span className="num font-semibold">{fmtInt(starting.length)}</span> starting
-              </>
+            {t.summary(
+              <span className="num font-semibold">{fmtInt(confirmedCount)}</span>,
+              dos.length > 0 ? <span className="num font-semibold text-loss">{fmtInt(dos.length)}</span> : null,
+              starting.length > 0 ? <span className="num font-semibold">{fmtInt(starting.length)}</span> : null,
             )}
           </p>
           {dos.length > 0 && (
             <p className="mt-1 text-sm text-muted">
-              Nodes on the DOS list aren't paid until they're started again. This is usually caused by incorrect
-              collateral information or the daemon not being synced.
+              {t.dosExplain}
             </p>
           )}
           {!healthKnown && (
             <p className="mt-1 text-sm text-muted">
-              The DOS list couldn't be checked right now, so only confirmed nodes are shown.
+              {t.dosUnknown}
             </p>
           )}
         </div>
@@ -194,45 +189,45 @@ export function LookupTab({ state, update, price }: Props) {
             <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
               {TIERS.slice()
                 .reverse()
-                .map((t) => (
-                  <div key={t}>
+                .map((tier) => (
+                  <div key={tier}>
                     <dt className="flex items-center gap-2 text-sm text-muted">
-                      <TierSwatch tier={t} />
-                      {TIER_LABEL[t]}
+                      <TierSwatch tier={tier} />
+                      {TIER_LABEL[tier]}
                     </dt>
-                    <dd className="num text-2xl font-semibold">{result.totals.nodes[t]}</dd>
+                    <dd className="num text-2xl font-semibold">{fmtInt(result.totals.nodes[tier])}</dd>
                   </div>
                 ))}
             </dl>
             <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
               <div>
-                <dt className="text-sm text-muted">{paMult > 0 ? "Native FLUX per day" : "Expected per day"}</dt>
+                <dt className="text-sm text-muted">{paMult > 0 ? t.nativePerDay : t.expectedPerDay}</dt>
                 <dd className="num text-2xl font-semibold">{fmtFlux(result.totals.expectedDailyFlux)}</dd>
               </div>
               {paMult > 0 && (
                 <div>
-                  <dt className="text-sm text-muted">Parallel assets per day</dt>
+                  <dt className="text-sm text-muted">{t.paPerDay}</dt>
                   <dd className="num text-2xl font-semibold">{fmtFlux(dailyPa)}</dd>
-                  <dd className="text-xs text-muted">Claim in Zelcore, until they end</dd>
+                  <dd className="text-xs text-muted">{t.claimUntil}</dd>
                 </div>
               )}
               {paMult > 0 && (
                 <div>
-                  <dt className="text-sm text-muted">Total per day</dt>
+                  <dt className="text-sm text-muted">{t.totalPerDay}</dt>
                   <dd className="num text-2xl font-semibold">{fmtFlux(dailyTotal)} FLUX</dd>
                   {price !== null && <dd className="num text-sm text-muted">{fmtMoney(dailyTotal * price, c)}</dd>}
                 </div>
               )}
               {paMult === 0 && price !== null && (
                 <div>
-                  <dt className="text-sm text-muted">Value per day</dt>
+                  <dt className="text-sm text-muted">{t.valuePerDay}</dt>
                   <dd className="num text-2xl font-semibold">{fmtMoney(result.totals.expectedDailyFlux * price, c)}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm text-muted">Yearly reward rate</dt>
+                <dt className="text-sm text-muted">{t.rate}</dt>
                 <dd className="num text-2xl font-semibold">{fmtPct(yearRate)}</dd>
-                {paMult > 0 && <dd className="num text-xs text-muted">{fmtPct(nativeRate)} native</dd>}
+                {paMult > 0 && <dd className="num text-xs text-muted">{t.native(fmtPct(nativeRate))}</dd>}
               </div>
             </dl>
             <button
@@ -240,17 +235,19 @@ export function LookupTab({ state, update, price }: Props) {
               onClick={() => update({ a: { ...state.a, nodes: { ...result.totals.nodes } }, tab: "earnings" })}
               className="rounded-md border border-ink px-4 py-2 text-sm font-medium"
             >
-              Use these nodes in the calculator
+              {t.useNodes}
             </button>
           </div>
 
           {h ? (
             <div className="rounded-md border border-line bg-surface p-4">
-              <p className="text-sm text-muted">Last {h.days} days, native FLUX only</p>
+              <p className="text-sm text-muted">{t.lastDays(h.days)}</p>
               <p className="mt-1 text-xl">
-                <span className="num font-semibold">{fmtFlux(h.flux)} FLUX</span> received across{" "}
-                <span className="num">{fmtInt(h.payments)}</span> payouts, against{" "}
-                <span className="num">{fmtFlux(h.projectedFlux)}</span> expected
+                {t.received(
+                  <span className="num font-semibold">{fmtFlux(h.flux)} FLUX</span>,
+                  <span className="num">{fmtInt(h.payments)}</span>,
+                  <span className="num">{fmtFlux(h.projectedFlux)}</span>,
+                )}
                 {diff !== null && (
                   <span className={`num ml-2 text-base ${diff >= -2 ? "text-gain" : "text-loss"}`}>
                     ({diff >= 0 ? "+" : ""}
@@ -259,13 +256,11 @@ export function LookupTab({ state, update, price }: Props) {
                 )}
               </p>
               <p className="mt-1 text-xs text-muted">
-                Parallel assets are paid on other chains, so they can't be checked here. Expected assumes today's
-                node counts and counts each node from when it was confirmed. A shortfall usually means a node missed
-                confirmations or was offline.
+                {t.historyNote}
               </p>
             </div>
           ) : (
-            <Notice>Payout history isn't available right now. Node details below are current.</Notice>
+            <Notice>{t.historyMissing}</Notice>
           )}
         </>
       )}
@@ -280,20 +275,20 @@ export function LookupTab({ state, update, price }: Props) {
                 onChange={(e) => setOnlyAttention(e.target.checked)}
                 className="h-4 w-4 accent-[var(--nimbus)]"
               />
-              Show only nodes that need attention
+              {t.onlyAttention}
             </label>
           )}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
               <thead className="text-muted">
                 <tr className="border-b border-line text-right">
-                  <th className="py-2 pr-4 text-left font-normal">Tier</th>
-                  <th className="py-2 pr-4 text-left font-normal">Status</th>
-                  <th className="py-2 pr-4 text-left font-normal">Collateral</th>
-                  <th className="py-2 pr-4 font-normal">Queue position</th>
-                  <th className="py-2 pr-4 font-normal">Next payout</th>
-                  <th className="py-2 pr-4 font-normal">Last paid</th>
-                  <th className="py-2 font-normal">Expected per day</th>
+                  <th className="py-2 pr-4 text-left font-normal">{t.colTier}</th>
+                  <th className="py-2 pr-4 text-left font-normal">{t.colStatus}</th>
+                  <th className="py-2 pr-4 text-left font-normal">{t.colCollateral}</th>
+                  <th className="py-2 pr-4 font-normal">{t.colQueue}</th>
+                  <th className="py-2 pr-4 font-normal">{t.colNext}</th>
+                  <th className="py-2 pr-4 font-normal">{t.colLast}</th>
+                  <th className="py-2 font-normal">{t.colPerDay}</th>
                 </tr>
               </thead>
               <tbody className="num text-right">
@@ -306,14 +301,14 @@ export function LookupTab({ state, update, price }: Props) {
                       </span>
                     </td>
                     <td className="py-2 pr-4 text-left">
-                      <StatusBadge tone="loss" label="On DOS list" />
+                      <StatusBadge tone="loss" label={t.onDos} />
                       <span className="block text-xs text-muted">
-                        {n.eligibleInBlocks === 0 ? "Can be started now" : `Can be started ${fmtRelative(n.eligibleAt)}`}
+                        {n.eligibleInBlocks === 0 ? t.startNow : t.startIn(fmtRelative(n.eligibleAt))}
                       </span>
                     </td>
                     <td className="py-2 pr-4 text-left text-muted">{n.collateralRef}</td>
                     <td className="py-2 pr-4 text-muted">—</td>
-                    <td className="py-2 pr-4 text-muted">Not being paid</td>
+                    <td className="py-2 pr-4 text-muted">{t.notPaid}</td>
                     <td className="py-2 pr-4 text-muted">—</td>
                     <td className="py-2 text-muted">—</td>
                   </tr>
@@ -327,11 +322,11 @@ export function LookupTab({ state, update, price }: Props) {
                       </span>
                     </td>
                     <td className="py-2 pr-4 text-left">
-                      <StatusBadge tone="gain" label="Confirmed" />
+                      <StatusBadge tone="gain" label={t.confirmed} />
                     </td>
                     <td className="py-2 pr-4 text-left text-muted">{n.collateralRef}</td>
                     <td className="py-2 pr-4">
-                      {fmtInt(n.rank + 1)} of {fmtInt(n.queueSize)}
+                      {t.queuePos(fmtInt(n.rank + 1), fmtInt(n.queueSize))}
                     </td>
                     <td className="py-2 pr-4">{fmtRelative(n.nextPayoutEta)}</td>
                     <td className="py-2 pr-4">{fmtRelative(n.lastPaidAt)}</td>
@@ -343,10 +338,10 @@ export function LookupTab({ state, update, price }: Props) {
           </div>
           {starting.length > 0 && (
             <p className="text-sm">
-              {startingSentence(starting)}
+              {startingSentence(t, starting)}
             </p>
           )}
-          <p className="text-xs text-muted">Updated {fmtRelative(result.updatedAt)}. Node IP addresses are never shown.</p>
+          <p className="text-xs text-muted">{t.updated(fmtRelative(result.updatedAt))}</p>
         </>
       )}
     </div>

@@ -9,22 +9,18 @@ import { ProjectionsTab } from "./components/ProjectionsTab.tsx";
 import { Contribute } from "./components/Contribute.tsx";
 import { HowItWorksButton, HowItWorksProvider } from "./components/HowItWorks.tsx";
 import { Notice } from "./components/ui.tsx";
+import { useLang } from "./i18n/index.tsx";
 import { useTheme } from "./theme.ts";
 import type { Market } from "./model.ts";
-import { TABS, useAppState, type Tab } from "./state.ts";
+import { TABS, useAppState } from "./state.ts";
 
 const REPO_URL = "https://github.com/Dawg4037/flux-node-calculator";
-
-const TAB_LABEL: Record<Tab, string> = {
-  earnings: "Earnings and ROI",
-  projections: "Projections",
-  next: "Next node",
-  lookup: "Node lookup",
-};
 
 export function App() {
   const [state, update] = useAppState();
   const [theme, setTheme] = useTheme();
+  // Reading the language here re-renders the whole page when it changes.
+  const { lang, t } = useLang();
   const network = useNetwork();
   const price = usePrice();
 
@@ -55,32 +51,32 @@ export function App() {
 
       <main className="mx-auto max-w-6xl space-y-10 px-4 py-10 sm:px-6">
         {network.error && !network.data && (
-          <Notice tone="error">Can't reach the Flux network right now ({network.error}). Retrying.</Notice>
+          <Notice tone="error">{t.app.networkError}</Notice>
         )}
         {price.error && !price.data && (
-          <Notice tone="error">Can't load the FLUX price right now ({price.error}). Retrying.</Notice>
+          <Notice tone="error">{t.app.priceError}</Notice>
         )}
 
         {network.data && <NetworkTable network={network.data} state={state} />}
 
         <section className="border-t border-line pt-6">
-          <div role="tablist" aria-label="Calculator sections" className="mb-8 flex gap-1 overflow-x-auto border-b border-line">
-            {TABS.map((t, i) => (
+          <div role="tablist" aria-label={t.app.tablist} className="mb-8 flex gap-1 overflow-x-auto border-b border-line">
+            {TABS.map((tab, i) => (
               <button
-                key={t}
-                id={`tab-${t}`}
+                key={tab}
+                id={`tab-${tab}`}
                 role="tab"
                 type="button"
-                aria-selected={state.tab === t}
-                aria-controls={`panel-${t}`}
-                tabIndex={state.tab === t ? 0 : -1}
+                aria-selected={state.tab === tab}
+                aria-controls={`panel-${tab}`}
+                tabIndex={state.tab === tab ? 0 : -1}
                 onKeyDown={(e) => onTabKey(e, i)}
-                onClick={() => update({ tab: t })}
+                onClick={() => update({ tab })}
                 className={`-mb-px shrink-0 border-b-2 px-4 py-2.5 text-base whitespace-nowrap ${
-                  state.tab === t ? "border-ink font-semibold text-ink" : "border-transparent text-muted hover:text-ink"
+                  state.tab === tab ? "border-ink font-semibold text-ink" : "border-transparent text-muted hover:text-ink"
                 }`}
               >
-                {TAB_LABEL[t]}
+                {t.app.tabs[tab]}
               </button>
             ))}
           </div>
@@ -89,7 +85,7 @@ export function App() {
             {state.tab === "lookup" ? (
               <LookupTab state={state} update={update} price={price.data?.prices[state.currency] ?? null} />
             ) : !market ? (
-              <div className="h-64 animate-pulse rounded-md bg-line/30" aria-label="Loading" />
+              <div className="h-64 animate-pulse rounded-md bg-line/30" aria-label={t.app.loading} />
             ) : state.tab === "earnings" ? (
               <EarningsTab state={state} update={update} market={market} />
             ) : state.tab === "next" ? (
@@ -107,41 +103,52 @@ export function App() {
         <ul className="flex flex-wrap gap-x-5 gap-y-2 text-ink">
           <li>
             <a className="underline" href="https://runonflux.com/" rel="noopener noreferrer" target="_blank">
-              Runs on Flux
+              {t.app.runsOnFlux}
             </a>
           </li>
           <li>
-            Built by{" "}
-            <a className="underline" href="https://github.com/Dawg4037" rel="noopener noreferrer" target="_blank">
-              Dawg4037
-            </a>
+            {t.app.builtBy(
+              <a className="underline" href="https://github.com/Dawg4037" rel="noopener noreferrer" target="_blank">
+                Dawg4037
+              </a>,
+            )}
           </li>
           <li>
             <a className="underline" href={REPO_URL} rel="noopener noreferrer" target="_blank">
-              Source on GitHub
+              {t.app.source}
             </a>
           </li>
           <li>
             <a className="underline" href={`${REPO_URL}/issues/new/choose`} rel="noopener noreferrer" target="_blank">
-              Report an issue or suggest a feature
+              {t.app.issue}
             </a>
           </li>
+          {lang !== "en" && (
+            <li>
+              <a
+                className="underline"
+                href={`${REPO_URL}/issues/new?template=translation.yml`}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {t.app.translation}
+              </a>
+            </li>
+          )}
           <li>
             <HowItWorksButton />
           </li>
           <li className="num text-muted">v{__APP_VERSION__}</li>
         </ul>
         <p>
-          Independent community tool, not affiliated with Flux. Estimates only, not financial advice. Progressive Node
-          Rewards (FluxCloud revenue share) aren't included because no formula has been published. Rewards assume your
-          nodes stay confirmed.
+          {t.app.disclaimer}
         </p>
         <p>
-          Price data by{" "}
-          <a className="underline" href="https://www.coingecko.com/" rel="noopener noreferrer" target="_blank">
-            CoinGecko
-          </a>
-          . Network data from the Flux API. Open source under the MIT license.
+          {t.app.credits(
+            <a className="underline" href="https://www.coingecko.com/" rel="noopener noreferrer" target="_blank">
+              CoinGecko
+            </a>,
+          )}
         </p>
         </div>
       </footer>

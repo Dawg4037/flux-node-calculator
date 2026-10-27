@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
+import { useT } from "../i18n/index.tsx";
 
 /** FLUX address for contributions toward development and hosting costs. */
 export const CONTRIBUTION_ADDRESS = "t1ddHc7A9gqC7D9YBVczPW2tJLH9uFGfnXt";
 
 export function Contribute() {
+  const t = useT().contribute;
   const [copied, setCopied] = useState(false);
   const codeRef = useRef<HTMLElement>(null);
 
@@ -27,10 +29,8 @@ export function Contribute() {
 
   return (
     <div className="rounded-md border border-line bg-surface p-4">
-      <p className="text-ink">Help keep this calculator running</p>
-      <p className="mt-1">
-        Contributions in FLUX go toward development and hosting costs. Thank you for supporting it.
-      </p>
+      <p className="text-ink">{t.title}</p>
+      <p className="mt-1">{t.body}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <code ref={codeRef} className="num rounded border border-line bg-field px-2 py-1 text-sm break-all text-ink">
           {CONTRIBUTION_ADDRESS}
@@ -40,10 +40,10 @@ export function Contribute() {
           onClick={() => void copy()}
           className="rounded-md border border-ink px-3 py-1 text-sm font-medium text-ink"
         >
-          {copied ? "Copied" : "Copy address"}
+          {copied ? t.copied : t.copy}
         </button>
         <span aria-live="polite" className="sr-only">
-          {copied ? "Address copied to clipboard" : ""}
+          {copied ? t.copiedSr : ""}
         </span>
       </div>
     </div>

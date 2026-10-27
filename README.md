@@ -9,6 +9,8 @@ A public FluxNode reward calculator, hosted on FluxCloud.
 
 Every setup is stored in the URL, so a calculation can be shared as a link. A "How the math works" panel explains every calculation with live numbers.
 
+Available in English, Português (Brasil), Español and Deutsch. The language follows the browser and can be changed at the top right. Text lives in `web/src/i18n/` (one file per language, checked against the English one by TypeScript); corrections are welcome through the "Suggest a better translation" issue form.
+
 ## How rewards are calculated
 
 Verified against the live chain (October 2026):

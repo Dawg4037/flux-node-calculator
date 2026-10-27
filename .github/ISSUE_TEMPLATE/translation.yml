@@ -1,0 +1,28 @@
+name: Suggest a better translation
+description: Wording in Português, Español or Deutsch that's wrong, unclear or unnatural.
+title: "Translation: "
+labels: [translation]
+body:
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Português (Brasil)
+        - Español
+        - Deutsch
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text
+      description: Copy the text as it appears on the page, and say where it is (tab or section).
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested text
+    validations:
+      required: true

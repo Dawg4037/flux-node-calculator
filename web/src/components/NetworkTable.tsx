@@ -10,20 +10,22 @@ import {
   totalAprPct,
 } from "../../../shared/rewards.ts";
 import { fmtDuration, fmtFlux, fmtInt, fmtPct } from "../format.ts";
+import { useT } from "../i18n/index.tsx";
 import { paActiveNow, parallelAssetsFor } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { HowItWorksButton } from "./HowItWorks.tsx";
 import { Section, TierSwatch } from "./ui.tsx";
 
 export function NetworkTable({ network, state }: { network: NetworkResponse; state: AppState }) {
+  const t = useT().network;
   const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
   const pa = paMult > 0 ? parallelAssetsFor(state, { network, price: 0 }) : undefined;
   return (
     <Section
-      title="Tiers today"
+      title={t.title}
       aside={
         <>
-          Live from the Flux network. <HowItWorksButton className="text-ink" />
+          {t.live} <HowItWorksButton className="text-ink" />
         </>
       }
     >
@@ -31,51 +33,51 @@ export function NetworkTable({ network, state }: { network: NetworkResponse; sta
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="text-muted">
             <tr className="border-b border-line">
-              <th className="py-2 pr-4 font-normal">Tier</th>
-              <th className="py-2 pr-4 text-right font-normal">Collateral</th>
-              <th className="py-2 pr-4 text-right font-normal">Enabled nodes</th>
-              <th className="py-2 pr-4 text-right font-normal">FLUX per block</th>
-              <th className="py-2 pr-4 text-right font-normal">Per node per day</th>
-              {paMult > 0 && <th className="py-2 pr-4 text-right font-normal">With parallel assets</th>}
-              <th className="py-2 pr-4 text-right font-normal">Paid about every</th>
-              <th className="py-2 text-right font-normal">Yearly reward rate</th>
+              <th className="py-2 pr-4 font-normal">{t.tier}</th>
+              <th className="py-2 pr-4 text-right font-normal">{t.collateral}</th>
+              <th className="py-2 pr-4 text-right font-normal">{t.enabled}</th>
+              <th className="py-2 pr-4 text-right font-normal">{t.perBlock}</th>
+              <th className="py-2 pr-4 text-right font-normal">{t.perDay}</th>
+              {paMult > 0 && <th className="py-2 pr-4 text-right font-normal">{t.withPa}</th>}
+              <th className="py-2 pr-4 text-right font-normal">{t.paidEvery}</th>
+              <th className="py-2 text-right font-normal">{t.rate}</th>
             </tr>
           </thead>
           <tbody className="num">
             {TIERS.slice()
               .reverse()
-              .map((t) => (
-                <tr key={t} className="border-b border-line/60">
+              .map((tier) => (
+                <tr key={tier} className="border-b border-line/60">
                   <td className="py-2.5 pr-4">
                     <span className="flex items-center gap-2 font-medium">
-                      <TierSwatch tier={t} />
-                      {TIER_LABEL[t]}
+                      <TierSwatch tier={tier} />
+                      {TIER_LABEL[tier]}
                     </span>
                   </td>
-                  <td className="py-2.5 pr-4 text-right">{fmtInt(COLLATERAL[t])} FLUX</td>
-                  <td className="py-2.5 pr-4 text-right">{fmtInt(network.nodes[t])}</td>
-                  <td className="py-2.5 pr-4 text-right">{fmtFlux(network.rewardPerBlock[t])}</td>
+                  <td className="py-2.5 pr-4 text-right">{fmtInt(COLLATERAL[tier])} FLUX</td>
+                  <td className="py-2.5 pr-4 text-right">{fmtInt(network.nodes[tier])}</td>
+                  <td className="py-2.5 pr-4 text-right">{fmtFlux(network.rewardPerBlock[tier])}</td>
                   <td className="py-2.5 pr-4 text-right">
-                    {fmtFlux(dailyFluxPerNode(t, network.height, network.nodes[t]))} FLUX
+                    {fmtFlux(dailyFluxPerNode(tier, network.height, network.nodes[tier]))} FLUX
                   </td>
                   {paMult > 0 && (
                     <td className="py-2.5 pr-4 text-right">
-                      {fmtFlux(dailyFluxPerNode(t, network.height, network.nodes[t]) * (1 + paMult))} FLUX
+                      {fmtFlux(dailyFluxPerNode(tier, network.height, network.nodes[tier]) * (1 + paMult))} FLUX
                     </td>
                   )}
                   <td className="py-2.5 pr-4 text-right">
-                    {fmtDuration(network.nodes[t] * BLOCK_TIME_SECONDS * 1000)}
+                    {fmtDuration(network.nodes[tier] * BLOCK_TIME_SECONDS * 1000)}
                   </td>
                   <td className="py-2.5 text-right">
                     {pa ? (
                       <>
-                        {fmtPct(totalAprPct(t, network.height, network.nodes[t], pa))}
+                        {fmtPct(totalAprPct(tier, network.height, network.nodes[tier], pa))}
                         <span className="block text-xs text-muted">
-                          {fmtPct(fluxAprPct(t, network.height, network.nodes[t]))} native
+                          {t.native(fmtPct(fluxAprPct(tier, network.height, network.nodes[tier])))}
                         </span>
                       </>
                     ) : (
-                      fmtPct(fluxAprPct(t, network.height, network.nodes[t]))
+                      fmtPct(fluxAprPct(tier, network.height, network.nodes[tier]))
                     )}
                   </td>
                 </tr>
@@ -84,11 +86,7 @@ export function NetworkTable({ network, state }: { network: NetworkResponse; sta
         </table>
       </div>
       <p className="mt-2 text-xs text-muted">
-        Yearly reward rate is FLUX earned over the next 12 months as a share of collateral, including the next
-        reduction
-        {paMult > 0
-          ? `, with parallel assets until their end date (${state.paCount} × 10% of each payout, paid on other chains, must be claimed). The smaller figure is native FLUX alone.`
-          : "."}
+        {t.footnote(paMult > 0 ? state.paCount : null)}
       </p>
     </Section>
   );

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { BLOCKS_PER_MONTH, REDUCTION_INTERVAL } from "../../../shared/rewards.ts";
 import { fmtFlux, fmtMoney, fmtMonths, fmtPrice } from "../format.ts";
+import { useT } from "../i18n/index.tsx";
 import { hasNodes, runProjection, type Market } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { LineChart } from "./LineChart.tsx";
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function ProjectionsTab({ state, update, market }: Props) {
+  const t = useT().projections;
   const c = state.currency;
   const months = state.years * 12;
 
@@ -27,7 +29,7 @@ export function ProjectionsTab({ state, update, market }: Props) {
   }, [state, market, months]);
 
   if (!hasNodes(state.a)) {
-    return <Notice>Add at least one node on the Earnings and ROI tab to see a projection.</Notice>;
+    return <Notice>{t.needNodes}</Notice>;
   }
 
   const base = runs.base;
@@ -46,31 +48,32 @@ export function ProjectionsTab({ state, update, market }: Props) {
   });
 
   const cuts = Math.max(0, Math.floor((market.network.height + months * BLOCKS_PER_MONTH - market.network.nextReductionHeight) / REDUCTION_INTERVAL) + 1);
-  const breakEven = (m: number | null) => (m === null ? `not within ${state.years} years` : m === 0 ? "immediately" : `after ${fmtMonths(m)}`);
+  const breakEven = (m: number | null) =>
+    m === null ? t.notWithin(state.years) : m === 0 ? t.immediately : t.after(fmtMonths(m));
 
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
       <div className="space-y-5">
         <p className="text-sm text-muted">
-          Uses the nodes and costs from the Earnings and ROI tab. Each year compounds the changes below.
+          {t.intro}
         </p>
-        <NumberField label="Years" integer min={1} max={20} value={state.years} onChange={(years) => update({ years })} />
+        <NumberField label={t.years} integer min={1} max={20} value={state.years} onChange={(years) => update({ years })} />
         <NumberField
-          label="Network size change per year"
+          label={t.growth}
           suffix="%"
           min={-50}
           max={200}
           value={state.growth}
           onChange={(growth) => update({ growth })}
-          hint="More nodes in a tier means each one is paid less often."
+          hint={t.growthHint}
         />
         <fieldset className="space-y-3 border-t border-line pt-5">
-          <legend className="float-left mb-1 w-full text-sm font-medium">FLUX price change per year</legend>
-          <NumberField label="Low" suffix="%" min={-99} max={1000} value={state.bear} onChange={(bear) => update({ bear })} />
-          <NumberField label="Middle" suffix="%" min={-99} max={1000} value={state.base} onChange={(base) => update({ base })} />
-          <NumberField label="High" suffix="%" min={-99} max={1000} value={state.bull} onChange={(bull) => update({ bull })} />
+          <legend className="float-left mb-1 w-full text-sm font-medium">{t.priceChange}</legend>
+          <NumberField label={t.low} suffix="%" min={-99} max={1000} value={state.bear} onChange={(bear) => update({ bear })} />
+          <NumberField label={t.middle} suffix="%" min={-99} max={1000} value={state.base} onChange={(base) => update({ base })} />
+          <NumberField label={t.high} suffix="%" min={-99} max={1000} value={state.bull} onChange={(bull) => update({ bull })} />
           <p className="text-xs text-muted">
-            Starting from {fmtPrice(market.price, c)}. These are your assumptions, not forecasts.
+            {t.startFrom(fmtPrice(market.price, c))}
           </p>
         </fieldset>
         <div className="border-t border-line pt-5">
@@ -80,35 +83,33 @@ export function ProjectionsTab({ state, update, market }: Props) {
 
       <div className="space-y-8">
         <div>
-          <h3 className="text-lg font-semibold">Cumulative profit</h3>
+          <h3 className="text-lg font-semibold">{t.chartTitle}</h3>
           <p className="mb-4 text-sm text-muted">
-            Revenue minus running costs over {state.years} {state.years === 1 ? "year" : "years"}, including{" "}
-            {cuts} reward {cuts === 1 ? "reduction" : "reductions"}
-            {state.pa ? ", with parallel assets until their end date" : ""}.
+            {t.chartIntro(state.years, cuts, state.pa)}
           </p>
           <LineChart
-            ariaLabel="Cumulative profit by month for three price scenarios"
+            ariaLabel={t.chartAria}
             series={[
-              { name: `High (${state.bull}%/yr)`, color: "var(--gain)", values: runs.bull.months.map((m) => m.cumulativeNet) },
-              { name: `Middle (${state.base}%/yr)`, color: "var(--nimbus)", values: base.months.map((m) => m.cumulativeNet) },
-              { name: `Low (${state.bear}%/yr)`, color: "var(--loss)", values: runs.bear.months.map((m) => m.cumulativeNet), dashed: true },
+              { name: t.series(t.high, state.bull), color: "var(--gain)", values: runs.bull.months.map((m) => m.cumulativeNet) },
+              { name: t.series(t.middle, state.base), color: "var(--nimbus)", values: base.months.map((m) => m.cumulativeNet) },
+              { name: t.series(t.low, state.bear), color: "var(--loss)", values: runs.bear.months.map((m) => m.cumulativeNet), dashed: true },
             ]}
-            xLabel={(i) => `Month ${i + 1}`}
+            xLabel={(i) => t.month(i + 1)}
             xTicks={Array.from({ length: state.years }, (_, y) => y * 12 + 11)}
-            tickLabel={(i) => `Year ${Math.round((i + 1) / 12)}`}
+            tickLabel={(i) => t.year(Math.round((i + 1) / 12))}
             formatY={(v) => fmtMoney(v, c)}
-            reference={base.capital > 0 ? { value: base.capital, label: `To recover: ${fmtMoney(base.capital, c)}` } : undefined}
+            reference={base.capital > 0 ? { value: base.capital, label: t.toRecover(fmtMoney(base.capital, c)) } : undefined}
           />
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
             {(
               [
-                ["High", runs.bull],
-                ["Middle", runs.base],
-                ["Low", runs.bear],
+                [t.high, runs.bull],
+                [t.middle, runs.base],
+                [t.low, runs.bear],
               ] as const
             ).map(([label, r]) => (
               <div key={label}>
-                <dt className="text-muted">{label}: break-even</dt>
+                <dt className="text-muted">{t.breakEven(label)}</dt>
                 <dd className="font-medium">{breakEven(r.breakEvenMonth)}</dd>
               </div>
             ))}
@@ -116,17 +117,17 @@ export function ProjectionsTab({ state, update, market }: Props) {
         </div>
 
         <div className="overflow-x-auto">
-          <h3 className="mb-2 text-lg font-semibold">Year by year, middle price</h3>
+          <h3 className="mb-2 text-lg font-semibold">{t.tableTitle}</h3>
           <table className="w-full min-w-[560px] text-sm">
             <thead className="text-muted">
               <tr className="border-b border-line text-right">
-                <th className="py-2 pr-4 text-left font-normal">Year</th>
-                <th className="py-2 pr-4 font-normal">{state.pa ? "Native FLUX" : "FLUX earned"}</th>
-                {state.pa && <th className="py-2 pr-4 font-normal">Parallel assets</th>}
-                <th className="py-2 pr-4 font-normal">Total FLUX</th>
-                <th className="py-2 pr-4 font-normal">Price at year end</th>
-                <th className="py-2 pr-4 font-normal">Net that year</th>
-                <th className="py-2 font-normal">Total net</th>
+                <th className="py-2 pr-4 text-left font-normal">{t.colYear}</th>
+                <th className="py-2 pr-4 font-normal">{state.pa ? t.colNative : t.colEarned}</th>
+                {state.pa && <th className="py-2 pr-4 font-normal">{t.colPa}</th>}
+                <th className="py-2 pr-4 font-normal">{t.colTotal}</th>
+                <th className="py-2 pr-4 font-normal">{t.colPrice}</th>
+                <th className="py-2 pr-4 font-normal">{t.colNet}</th>
+                <th className="py-2 font-normal">{t.colTotalNet}</th>
               </tr>
             </thead>
             <tbody className="num text-right">

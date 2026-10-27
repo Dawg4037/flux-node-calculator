@@ -1,10 +1,37 @@
 import type { Currency } from "../../shared/api.ts";
+import type { FormatWords } from "./i18n/parts.tsx";
+
+let locale: string | undefined;
+let words: FormatWords = {
+  now: "now",
+  immediately: "immediately",
+  days: (n) => `${n}d`,
+  hours: (n) => `${n}h`,
+  minutes: (n) => `${n}m`,
+  seconds: (n) => `${n}s`,
+  years: (n) => `${n} ${n === 1 ? "year" : "years"}`,
+  months: (n) => `${n} ${n === 1 ? "month" : "months"}`,
+  and: " ",
+  future: (d) => `in ${d}`,
+  past: (d) => `${d} ago`,
+};
 
 const cache = new Map<string, Intl.NumberFormat>();
+
+/** Called by the language provider: sets the locale for numbers and dates and the words for durations. */
+export function setFormatLanguage(nextLocale: string, nextWords: FormatWords) {
+  if (nextLocale !== locale) cache.clear();
+  locale = nextLocale;
+  words = nextWords;
+}
+
+/** Locale in use for numbers and dates (undefined = browser default). */
+export const currentLocale = () => locale;
+
 const nf = (key: string, opts: Intl.NumberFormatOptions) => {
   let f = cache.get(key);
   if (!f) {
-    f = new Intl.NumberFormat(undefined, opts);
+    f = new Intl.NumberFormat(locale, opts);
     cache.set(key, f);
   }
   return f;
@@ -40,32 +67,45 @@ export const fmtPrice = (n: number, currency: Currency) =>
 export const fmtPct = (n: number, digits = 1) => `${nf(`pct${digits}`, { maximumFractionDigits: digits }).format(n)}%`;
 
 export function fmtDuration(ms: number): string {
-  if (ms <= 0) return "now";
+  if (ms <= 0) return words.now;
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s % 60}s`;
-  return `${s}s`;
+  if (d > 0) return `${words.days(d)} ${words.hours(h)} ${words.minutes(m)}`;
+  if (h > 0) return `${words.hours(h)} ${words.minutes(m)}`;
+  if (m > 0) return `${words.minutes(m)} ${words.seconds(s % 60)}`;
+  return words.seconds(s);
 }
 
 export function fmtMonths(months: number): string {
-  if (months <= 0) return "immediately";
+  if (months <= 0) return words.immediately;
   const y = Math.floor(months / 12);
   const m = months % 12;
   const parts = [];
-  if (y) parts.push(`${y} ${y === 1 ? "year" : "years"}`);
-  if (m) parts.push(`${m} ${m === 1 ? "month" : "months"}`);
-  return parts.join(" ");
+  if (y) parts.push(words.years(y));
+  if (m) parts.push(words.months(m));
+  return parts.join(words.and);
 }
 
 export const fmtDate = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
+  iso ? new Date(iso).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }) : "—";
+
+/** A calendar day given as YYYY-MM-DD, e.g. "January 1, 2028". */
+export const fmtDay = (isoDay: string) =>
+  new Date(`${isoDay}T00:00:00Z`).toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+
+/** Month and year, e.g. "Oct 2027". */
+export const fmtMonthYear = (ms: number) => new Date(ms).toLocaleDateString(locale, { month: "short", year: "numeric" });
 
 export const fmtRelative = (iso: string | null, now = Date.now()) => {
   if (!iso) return "—";
   const diff = new Date(iso).getTime() - now;
-  return diff >= 0 ? `in ${fmtDuration(diff)}` : `${fmtDuration(-diff)} ago`;
+  if (Math.abs(diff) < 1000) return words.now;
+  return diff >= 0 ? words.future(fmtDuration(diff)) : words.past(fmtDuration(-diff));
 };
