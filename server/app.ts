@@ -47,11 +47,12 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
       useDefaults: false,
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        // Cloudflare Web Analytics: beacon script and where it reports visits.
+        scriptSrc: ["'self'", "https://static.cloudflareinsights.com"],
         styleSrc: ["'self'"],
         imgSrc: ["'self'", "data:"],
         fontSrc: ["'self'"],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", "https://cloudflareinsights.com"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
