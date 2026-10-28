@@ -1,7 +1,7 @@
 /** Response shapes for the app's own API (/api/*). Shared by server and browser. */
 import type { PerTier, Tier } from "./rewards.ts";
 
-export const CURRENCIES = ["usd", "eur", "gbp", "cad"] as const;
+export const CURRENCIES = ["usd", "eur", "gbp", "cad", "idr"] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
 export interface NetworkResponse {

@@ -12,7 +12,8 @@ import { Notice } from "./components/ui.tsx";
 import { useLang } from "./i18n/index.tsx";
 import { useTheme } from "./theme.ts";
 import type { Market } from "./model.ts";
-import { TABS, useAppState } from "./state.ts";
+import { TABS, useAppState, withCurrencyExamples } from "./state.ts";
+import type { Currency } from "../../shared/api.ts";
 
 const REPO_URL = "https://github.com/Dawg4037/flux-node-calculator";
 
@@ -31,6 +32,16 @@ export function App() {
     [network.data, price.data, state.currency],
   );
 
+  // Example costs follow the currency (40 USD ≈ 670,000 IDR); costs the visitor typed are kept.
+  const changeCurrency = (currency: Currency) => {
+    const prices = price.data?.prices ?? null;
+    update({
+      currency,
+      a: withCurrencyExamples(state.a, state.currency, currency, prices),
+      b: withCurrencyExamples(state.b, state.currency, currency, prices),
+    });
+  };
+
   const onTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
     const next = TABS[(i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length]!;
@@ -45,7 +56,7 @@ export function App() {
         network={network.data}
         price={price.data}
         currency={state.currency}
-        onCurrency={(currency) => update({ currency })}
+        onCurrency={changeCurrency}
         theme={theme}
         onTheme={setTheme}
       />

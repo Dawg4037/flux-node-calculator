@@ -45,7 +45,7 @@ function SetupInputs({
               label={t.costPerNode}
               suffix={sym}
               step={0.5}
-              max={1_000_000}
+              max={1e9}
               value={setup.cost[tier]}
               onChange={(n) => onChange({ ...setup, cost: { ...setup.cost, [tier]: n } })}
             />

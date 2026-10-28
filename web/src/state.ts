@@ -77,6 +77,34 @@ export const DEFAULT_STATE: AppState = {
   nnYears: 5,
 };
 
+/**
+ * Example running costs for a currency. The defaults are sized for USD, EUR, GBP and CAD;
+ * for rupiah they are converted at today's rate and rounded to a sensible step.
+ */
+export function exampleCosts(currency: Currency, prices: Record<Currency, number> | null): PerTier<number> | null {
+  const base = DEFAULT_STATE.a.cost;
+  if (currency !== "idr") return { ...base };
+  if (!prices || !(prices.usd > 0) || !(prices.idr > 0)) return null;
+  const rate = prices.idr / prices.usd;
+  const round = (v: number) => Math.round((v * rate) / 10_000) * 10_000;
+  return { cumulus: round(base.cumulus), nimbus: round(base.nimbus), stratus: round(base.stratus) };
+}
+
+/** Swap example costs to the new currency's, leaving any cost the visitor typed alone. */
+export function withCurrencyExamples(
+  s: Setup,
+  from: Currency,
+  to: Currency,
+  prices: Record<Currency, number> | null,
+): Setup {
+  const oldEx = exampleCosts(from, prices);
+  const newEx = exampleCosts(to, prices);
+  if (!oldEx || !newEx) return s;
+  const cost = { ...s.cost };
+  for (const t of TIERS) if (cost[t] === oldEx[t]) cost[t] = newEx[t];
+  return { ...s, cost };
+}
+
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const validDate = (v: string | null) => (v && DATE_RE.test(v) && !Number.isNaN(Date.parse(v)) ? v : null);
 
@@ -96,7 +124,7 @@ function readSetup(p: URLSearchParams, prefix: string, fallback: Setup): Setup {
   const cost = { ...fallback.cost };
   for (const t of TIERS) {
     nodes[t] = readNum(p, `${prefix}${TIER_KEY[t]}`, fallback.nodes[t], 0, 10_000, true);
-    cost[t] = readNum(p, `${prefix}${TIER_KEY[t]}h`, fallback.cost[t], 0, 1_000_000);
+    cost[t] = readNum(p, `${prefix}${TIER_KEY[t]}h`, fallback.cost[t], 0, 1e9);
   }
   return { nodes, cost, upfront: readNum(p, `${prefix}up`, fallback.upfront, 0, 1e9) };
 }

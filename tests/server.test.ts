@@ -60,7 +60,7 @@ function mockFetch(state: MockState): typeof fetch {
     if (url.startsWith("https://cg.test")) {
       state.cgHeaders = (init?.headers as Record<string, string>) ?? null;
       if (state.cgStatus && state.cgStatus !== 200) return json({ error: "nope" }, state.cgStatus);
-      return json({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, last_updated_at: 1792801600 } });
+      return json({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, idr: 1107.42, last_updated_at: 1792801600 } });
     }
     const ok = (data: unknown) => json({ status: state.fluxStatus, data });
     const path = url.replace("https://flux.test", "");

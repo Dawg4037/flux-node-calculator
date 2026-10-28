@@ -9,6 +9,7 @@ body:
       label: Language
       options:
         - Português (Brasil)
+        - Bahasa Indonesia
         - Español
         - Deutsch
         - Français

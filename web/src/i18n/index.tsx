@@ -4,12 +4,13 @@ import { de } from "./de.tsx";
 import { en, type Messages } from "./en.tsx";
 import { es } from "./es.tsx";
 import { fr } from "./fr.tsx";
+import { id } from "./id.tsx";
 import { pl } from "./pl.tsx";
 import { pt } from "./pt.tsx";
 import { ru } from "./ru.tsx";
 
 /** Selector order: Português first, then English, then the rest by native name. English is the fallback. */
-export const LANGS = ["pt", "en", "de", "es", "fr", "pl", "ru"] as const;
+export const LANGS = ["pt", "en", "id", "de", "es", "fr", "pl", "ru"] as const;
 export type Lang = (typeof LANGS)[number];
 
 /** Shown in the selector in each language's own name, so anyone can find theirs. */
@@ -21,9 +22,10 @@ export const LANG_NAME: Record<Lang, string> = {
   fr: "Français",
   pl: "Polski",
   ru: "Русский",
+  id: "Bahasa Indonesia",
 };
 
-const CATALOG: Record<Lang, Messages> = { en, pt, es, de, fr, pl, ru };
+const CATALOG: Record<Lang, Messages> = { en, pt, es, de, fr, pl, ru, id };
 
 /** Locale for numbers and dates when the browser's own locale is a different language. */
 const DEFAULT_LOCALE: Record<Lang, string> = {
@@ -34,6 +36,7 @@ const DEFAULT_LOCALE: Record<Lang, string> = {
   fr: "fr-FR",
   pl: "pl-PL",
   ru: "ru-RU",
+  id: "id-ID",
 };
 
 const isLang = (v: unknown): v is Lang => typeof v === "string" && (LANGS as readonly string[]).includes(v);

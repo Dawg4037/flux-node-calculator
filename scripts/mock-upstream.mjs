@@ -74,7 +74,7 @@ createServer((req, res) => {
     res.end(JSON.stringify(body));
   };
   if (url.pathname === "/cg/simple/price") {
-    return send({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, last_updated_at: now } });
+    return send({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, idr: 1107.42, last_updated_at: now } });
   }
   if (url.pathname in routes) return send({ status: "success", data: routes[url.pathname] });
   if (url.pathname === "/daemon/viewdeterministicfluxnodelist") {

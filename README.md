@@ -9,7 +9,7 @@ A public FluxNode reward calculator, hosted on FluxCloud.
 
 Every setup is stored in the URL, so a calculation can be shared as a link. A "How the math works" panel explains every calculation with live numbers.
 
-Available in Português (Brasil), English, Deutsch, Español, Français, Polski and Русский. The language follows the browser and can be changed at the top right. Text lives in `web/src/i18n/` (one file per language, checked against the English one by TypeScript); corrections are welcome through the "Suggest a better translation" issue form.
+Available in Português (Brasil), English, Bahasa Indonesia, Deutsch, Español, Français, Polski and Русский, with prices in USD, EUR, GBP, CAD and IDR. The language follows the browser and can be changed at the top right. Text lives in `web/src/i18n/` (one file per language, checked against the English one by TypeScript); corrections are welcome through the "Suggest a better translation" issue form.
 
 ## How rewards are calculated
 

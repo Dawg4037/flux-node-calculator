@@ -56,13 +56,25 @@ export const fmtMoney = (n: number, currency: Currency) => {
   }).format(n);
 };
 
-export const fmtPrice = (n: number, currency: Currency) =>
-  nf(`p-${currency}`, {
+/** FLUX price: 4 decimals for $0.0681, none for Rp 1,107. */
+/** Short money for chart axes: "$1.2K", "Rp 40 jt", "-€3K". */
+export const fmtMoneyShort = (n: number, currency: Currency) =>
+  nf(`ms-${currency}`, {
     style: "currency",
     currency: currency.toUpperCase(),
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4,
+    notation: "compact",
+    maximumFractionDigits: 1,
   }).format(n);
+
+export const fmtPrice = (n: number, currency: Currency) => {
+  const digits = Math.abs(n) >= 1000 ? 0 : Math.abs(n) >= 1 ? 2 : 4;
+  return nf(`p-${currency}-${digits}`, {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(n);
+};
 
 export const fmtPct = (n: number, digits = 1) => `${nf(`pct${digits}`, { maximumFractionDigits: digits }).format(n)}%`;
 

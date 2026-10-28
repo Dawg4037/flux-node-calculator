@@ -4,6 +4,7 @@ import { de } from "../web/src/i18n/de.tsx";
 import { en } from "../web/src/i18n/en.tsx";
 import { es } from "../web/src/i18n/es.tsx";
 import { fr } from "../web/src/i18n/fr.tsx";
+import { id } from "../web/src/i18n/id.tsx";
 import { pl } from "../web/src/i18n/pl.tsx";
 import { pt } from "../web/src/i18n/pt.tsx";
 import { ru } from "../web/src/i18n/ru.tsx";
@@ -21,6 +22,7 @@ describe("language-aware formatting", () => {
       ["de-DE", de, "1 Jahr und 2 Monaten", "in 2 Std. 5 Min."],
       ["fr-FR", fr, "1 an et 2 mois", "dans 2 h 5 min"],
       ["pl-PL", pl, "1 rok i 2 miesiące", "za 2 h 5 min"],
+      ["id-ID", id, "1 tahun dan 2 bulan", "dalam 2 jam 5 mnt"],
       ["ru-RU", ru, "1 год и 2 месяца", "через 2 ч 5 мин"],
     ] as const;
     for (const [locale, t, months, rel] of cases) {
@@ -41,5 +43,25 @@ describe("language-aware formatting", () => {
       "11 месяцев",
       "1 год и 9 месяцев",
     ]);
+  });
+});
+
+describe("rupiah", () => {
+  it("formats the FLUX price without decimals in IDR and with 4 in USD", async () => {
+    const { fmtPrice } = await import("../web/src/format.ts");
+    setFormatLanguage("en-US", en.fmt);
+    expect(fmtPrice(1107.42, "idr").replace(/\s/g, " ")).toBe("IDR 1,107");
+    expect(fmtPrice(0.068084, "usd")).toBe("$0.0681");
+  });
+
+  it("converts example costs to and from IDR but keeps typed costs", async () => {
+    const { exampleCosts, withCurrencyExamples, DEFAULT_STATE } = await import("../web/src/state.ts");
+    const prices = { usd: 0.066, eur: 0.059, gbp: 0.049, cad: 0.092, idr: 1107 };
+    expect(exampleCosts("idr", prices)).toEqual({ cumulus: 170_000, nimbus: 340_000, stratus: 670_000 });
+    const typed = { ...DEFAULT_STATE.a, cost: { cumulus: 10, nimbus: 25, stratus: 40 } };
+    const idr = withCurrencyExamples(typed, "usd", "idr", prices);
+    expect(idr.cost).toEqual({ cumulus: 170_000, nimbus: 25, stratus: 670_000 });
+    expect(withCurrencyExamples(idr, "idr", "usd", prices).cost).toEqual({ cumulus: 10, nimbus: 25, stratus: 40 });
+    expect(withCurrencyExamples(typed, "usd", "idr", null)).toEqual(typed);
   });
 });

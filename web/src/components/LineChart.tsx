@@ -16,6 +16,8 @@ interface Props {
   /** Optional shorter label for ticks. */
   tickLabel?: (i: number) => string;
   formatY: (v: number) => string;
+  /** Shorter format for axis labels; defaults to formatY. */
+  formatTick?: (v: number) => string;
   /** Horizontal reference line. */
   reference?: { value: number; label: string };
   ariaLabel: string;
@@ -33,7 +35,7 @@ function niceTicks(min: number, max: number, count = 5): number[] {
 }
 
 /** Small dependency-free SVG line chart with a hover readout. */
-export function LineChart({ series, xLabel, xTicks, tickLabel, formatY, reference, ariaLabel }: Props) {
+export function LineChart({ series, xLabel, xTicks, tickLabel, formatY, formatTick = formatY, reference, ariaLabel }: Props) {
   const clipId = useId();
   const [hover, setHover] = useState<number | null>(null);
   const n = series[0]?.values.length ?? 0;
@@ -84,7 +86,7 @@ export function LineChart({ series, xLabel, xTicks, tickLabel, formatY, referenc
           <g key={t}>
             <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="var(--line)" strokeWidth={t === 0 ? 1.5 : 1} />
             <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize="12" fill="var(--muted)" className="num">
-              {formatY(t)}
+              {formatTick(t)}
             </text>
           </g>
         ))}

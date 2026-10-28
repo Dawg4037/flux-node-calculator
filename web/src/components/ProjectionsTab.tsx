@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { BLOCKS_PER_MONTH, REDUCTION_INTERVAL } from "../../../shared/rewards.ts";
-import { fmtFlux, fmtMoney, fmtMonths, fmtPrice } from "../format.ts";
+import { fmtFlux, fmtMoney, fmtMoneyShort, fmtMonths, fmtPrice } from "../format.ts";
 import { useT } from "../i18n/index.tsx";
 import { hasNodes, runProjection, type Market } from "../model.ts";
 import type { AppState } from "../state.ts";
@@ -102,6 +102,7 @@ export function ProjectionsTab({ state, update, market }: Props) {
             xTicks={Array.from({ length: state.years }, (_, y) => y * 12 + 11)}
             tickLabel={(i) => t.year(Math.round((i + 1) / 12))}
             formatY={(v) => fmtMoney(v, c)}
+            formatTick={(v) => fmtMoneyShort(v, c)}
             reference={base.capital > 0 ? { value: base.capital, label: t.toRecover(fmtMoney(base.capital, c)) } : undefined}
           />
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
