@@ -37,9 +37,18 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
   });
 
   const flux = new FluxClient(config.fluxApiBaseUrl, fetchFn, config.fluxMaxConcurrency, app.log);
-  const price = new PriceClient(config.coingeckoBaseUrl, config.coingeckoApiKey, fetchFn, app.log);
+  const price = new PriceClient(
+    {
+      explorerUrls: config.explorerUrls,
+      frankfurterBaseUrl: config.frankfurterBaseUrl,
+      coingeckoBaseUrl: config.coingeckoBaseUrl,
+      coingeckoApiKey: config.coingeckoApiKey,
+    },
+    fetchFn,
+    app.log,
+  );
 
-  if (!config.coingeckoApiKey) app.log.warn("COINGECKO_API_KEY is not set; using CoinGecko's keyless endpoint");
+  if (!config.coingeckoApiKey) app.log.warn("COINGECKO_API_KEY is not set; the CoinGecko fallback will use the keyless endpoint");
 
   // ---------------------------------------------------------------- security
   await app.register(helmet, {

@@ -53,9 +53,9 @@ export const de: Messages = {
     translation: "Bessere Übersetzung vorschlagen",
     disclaimer:
       "Unabhängiges Community-Tool, nicht mit Flux verbunden. Nur Schätzungen, keine Finanzberatung. Progressive Node Rewards (Umsatzbeteiligung aus FluxCloud) sind nicht enthalten, weil keine Formel veröffentlicht wurde. Die Belohnungen setzen voraus, dass deine Nodes bestätigt bleiben.",
-    credits: (coingecko: N) => (
+    credits: (source: N) => (
       <>
-        Preisdaten von {coingecko}. Netzwerkdaten aus der Flux-API. Open Source unter der MIT-Lizenz.
+        Preisdaten: {source}. Netzwerkdaten aus der Flux-API. Open Source unter der MIT-Lizenz.
       </>
     ),
   },
@@ -302,7 +302,7 @@ export const de: Messages = {
         <H>Woher die Zahlen kommen</H>
         <p>
           Blockhöhe, aktive Nodes pro Stufe sowie die DOS- und Startliste kommen aus der API des Flux-Netzwerks und werden
-          etwa alle 90 Sekunden aktualisiert. Der FLUX-Preis kommt von CoinGecko und wird alle 20 Minuten aktualisiert.
+          etwa alle 90 Sekunden aktualisiert. Der FLUX-Preis in US-Dollar kommt vom Flux-Explorer und wird mit den täglichen Wechselkursen der Europäischen Zentralbank (über Frankfurter) in andere Währungen umgerechnet; CoinGecko dient als Ausweichquelle. Er wird alle 20 Minuten aktualisiert.
           Alles andere wird daraus berechnet.
         </p>
 

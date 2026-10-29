@@ -73,6 +73,10 @@ createServer((req, res) => {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify(body));
   };
+  if (url.pathname === "/explorer/api/currency") return send({ status: 200, data: { rate: 0.0681, short: "FLUX" } });
+  if (url.pathname === "/fx/v1/latest") {
+    return send({ amount: 1, base: "USD", date: "2026-10-28", rates: { CAD: 1.4047, EUR: 0.89823, GBP: 0.75258, IDR: 18177 } });
+  }
   if (url.pathname === "/cg/simple/price") {
     return send({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, idr: 1107.42, last_updated_at: now } });
   }

@@ -26,12 +26,33 @@ function url(name: string, fallback: string): string {
   }
 }
 
+/** Comma-separated list of base URLs; invalid entries are dropped. */
+function urlList(name: string, fallback: string[]): string[] {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const list = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => {
+      try {
+        return ["https:", "http:"].includes(new URL(s).protocol);
+      } catch {
+        return false;
+      }
+    })
+    .map((s) => s.replace(/\/+$/, ""));
+  return list.length ? list : fallback;
+}
+
 export interface Config {
   port: number;
   host: string;
   fluxApiBaseUrl: string;
   coingeckoApiKey: string;
   coingeckoBaseUrl: string;
+  /** Flux explorers for the FLUX/USD price, tried in order. */
+  explorerUrls: string[];
+  frankfurterBaseUrl: string;
   priceRefreshMs: number;
   networkRefreshMs: number;
   fluxMaxConcurrency: number;
@@ -49,6 +70,8 @@ export function loadConfig(): Config {
     fluxApiBaseUrl: url("FLUX_API_BASE_URL", "https://api.runonflux.io"),
     coingeckoApiKey: process.env.COINGECKO_API_KEY?.trim() ?? "",
     coingeckoBaseUrl: url("COINGECKO_BASE_URL", "https://api.coingecko.com/api/v3"),
+    explorerUrls: urlList("EXPLORER_URLS", ["https://explorer.runonflux.io", "https://explorer.app.runonflux.io"]),
+    frankfurterBaseUrl: url("FRANKFURTER_BASE_URL", "https://api.frankfurter.dev"),
     // Never faster than every 5 minutes, to protect the free-tier quota.
     priceRefreshMs: num("PRICE_REFRESH_MINUTES", 20, 5, 1440) * 60_000,
     networkRefreshMs: num("NETWORK_REFRESH_SECONDS", 90, 30, 3600) * 1000,

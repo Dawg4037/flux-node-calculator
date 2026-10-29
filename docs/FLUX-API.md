@@ -56,4 +56,4 @@ Implemented response:
 
 ## Not provided by Flux
 
-- FLUX market price → CoinGecko, coin id `zelcash` (verified).
+- FLUX market price → Flux explorer `GET /api/currency` → `{"status":200,"data":{"rate":0.068,"short":"FLUX"}}` (USD), on `explorer.runonflux.io` with `explorer.app.runonflux.io` as backup. Other currencies via Frankfurter (`/v1/latest?base=USD`, ECB daily rates). CoinGecko (coin id `zelcash`) as fallback.

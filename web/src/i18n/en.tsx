@@ -51,9 +51,9 @@ export const en = {
     translation: "Suggest a better translation",
     disclaimer:
       "Independent community tool, not affiliated with Flux. Estimates only, not financial advice. Progressive Node Rewards (FluxCloud revenue share) aren't included because no formula has been published. Rewards assume your nodes stay confirmed.",
-    credits: (coingecko: N) => (
+    credits: (source: N) => (
       <>
-        Price data by {coingecko}. Network data from the Flux API. Open source under the MIT license.
+        Price data: {source}. Network data from the Flux API. Open source under the MIT license.
       </>
     ),
   },
@@ -295,7 +295,7 @@ export const en = {
         <H>Where the numbers come from</H>
         <p>
           Block height, enabled nodes per tier, and the DOS and start lists come from the Flux network API, refreshed about
-          every 90 seconds. The FLUX price comes from CoinGecko, refreshed every 20 minutes. Everything else is calculated
+          every 90 seconds. The FLUX price in US dollars comes from the Flux explorer and is converted to other currencies with the European Central Bank's daily exchange rates (via Frankfurter), with CoinGecko as a backup. It's refreshed every 20 minutes. Everything else is calculated
           from those.
         </p>
 

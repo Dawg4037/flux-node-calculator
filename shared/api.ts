@@ -24,12 +24,16 @@ export interface NetworkResponse {
   stale: boolean;
 }
 
+export type PriceSource = "Flux explorer" | "CoinGecko";
+
 export interface PriceResponse {
   prices: Record<Currency, number>;
-  /** When CoinGecko last updated the price (ISO 8601), or null if unknown. */
+  /** When the price was last updated (ISO 8601), or null if unknown. */
   updatedAt: string | null;
   stale: boolean;
-  source: "CoinGecko";
+  source: PriceSource;
+  /** Date of the exchange rates used to convert from USD (Flux explorer source only). */
+  fxDate: string | null;
 }
 
 export interface LookupNode {

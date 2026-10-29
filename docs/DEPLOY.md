@@ -35,8 +35,12 @@ The app stores nothing on disk and uses ~100 MB of memory, so these minimums are
 
 | Variable | Value | Notes |
 |---|---|---|
-| `COINGECKO_API_KEY` | *(your Demo key)* | Server-side only |
-| `PRICE_REFRESH_MINUTES` | `20` | Keeps 3 instances under the 10k calls/month Demo cap |
+| `COINGECKO_API_KEY` | *(your Demo key)* | Optional. Only used when the Flux explorer price is unavailable. Server-side only |
+| `PRICE_REFRESH_MINUTES` | `20` | How often the price is refreshed |
+
+Names are case-sensitive: `coingecko_api_key` is not read.
+
+The price comes from the Flux explorer (`EXPLORER_URLS`, default `https://explorer.runonflux.io,https://explorer.app.runonflux.io`) in USD, converted with the ECB's daily rates from Frankfurter (`FRANKFURTER_BASE_URL`). CoinGecko is the fallback. None of these need changing.
 
 `PORT` is already `8080` in the image. Other settings (`NETWORK_REFRESH_SECONDS`, `FLUX_MAX_CONCURRENCY`, `LOOKUP_RATE_PER_MINUTE`, `TRUST_PROXY`) have safe defaults — see `.env.example`.
 
@@ -45,7 +49,7 @@ Review the price, sign in Zelcore, and pay.
 ## 3. Check it
 
 - `https://<app>.app.runonflux.io/api/health` → `"network":true` and `"price":true` within a minute of starting, plus the `version` that instance runs.
-  If `price` is false, `priceSource.lastError` says why (e.g. `HTTP 429`, `timeout`, `network error (…)`) and `priceSource.keySet` shows whether `COINGECKO_API_KEY` reached the container. After a failed price refresh the server retries in 2, 4, 8 and 16 minutes, then every 20.
+  `priceSource.source` shows where the price came from (`Flux explorer` or `CoinGecko`), and `priceSource.errors` the last error from each source. If `price` is false, `priceSource.lastError` says why (e.g. `explorer: HTTP 503; coingecko: timeout`), and `priceSource.keySet` shows whether `COINGECKO_API_KEY` reached the container. After a failed price refresh the server retries in 2, 4, 8 and 16 minutes, then every 20.
 - In the logs, `chain block reward differs from schedule` means the chain's reward no longer matches the coded schedule.
 
 ## Releasing an update

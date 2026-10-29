@@ -157,9 +157,21 @@ export function App() {
         </p>
         <p>
           {t.app.credits(
-            <a className="underline" href="https://www.coingecko.com/" rel="noopener noreferrer" target="_blank">
-              CoinGecko
-            </a>,
+            price.data?.source === "CoinGecko" ? (
+              <a className="underline" href="https://www.coingecko.com/" rel="noopener noreferrer" target="_blank">
+                CoinGecko
+              </a>
+            ) : (
+              <>
+                <a className="underline" href="https://explorer.runonflux.io/" rel="noopener noreferrer" target="_blank">
+                  Flux explorer
+                </a>{" "}
+                ·{" "}
+                <a className="underline" href="https://frankfurter.dev/" rel="noopener noreferrer" target="_blank">
+                  Frankfurter (ECB)
+                </a>
+              </>
+            ),
           )}
         </p>
         </div>

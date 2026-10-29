@@ -36,11 +36,12 @@ npm run build
 npm start           # http://localhost:8080
 ```
 
-Offline, with a stand-in for the Flux API and CoinGecko:
+Offline, with a stand-in for the Flux API and the price sources:
 
 ```sh
 node scripts/mock-upstream.mjs &
-FLUX_API_BASE_URL=http://127.0.0.1:9999 COINGECKO_BASE_URL=http://127.0.0.1:9999/cg npm start
+FLUX_API_BASE_URL=http://127.0.0.1:9999 EXPLORER_URLS=http://127.0.0.1:9999/explorer \
+  FRANKFURTER_BASE_URL=http://127.0.0.1:9999/fx COINGECKO_BASE_URL=http://127.0.0.1:9999/cg npm start
 ```
 
 For frontend work, run `npm start` (or the mock setup) and `npm run dev` together; Vite proxies `/api` to port 8080.
@@ -58,7 +59,7 @@ tests/    Vitest tests
 
 ## Security
 
-- The browser only talks to this server. Flux and CoinGecko are called server-side, cached, and shared by all visitors; the CoinGecko key never reaches the browser.
+- The browser only talks to this server. The Flux API, Flux explorer, Frankfurter and CoinGecko are called server-side, cached, and shared by all visitors; the CoinGecko key never reaches the browser.
 - Strict Content-Security-Policy (`'self'` only), no framing, nosniff, strict referrer policy, permissions policy.
 - Lookup addresses are validated exactly (the Flux API substring-matches), results are filtered to exact matches, node IPs and public keys are never returned, and lookups are rate-limited per visitor and redacted from logs.
 - At most 2 concurrent Flux API calls per instance (FluxOS caps daemon RPC at 5), with timeouts, retry with backoff, and stale-data fallback.

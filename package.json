@@ -1,6 +1,6 @@
 {
   "name": "flux-node-calculator",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "FluxNode reward calculator: node lookup, multi-year projections, ROI and break-even.",
   "scripts": {
     "dev": "vite",

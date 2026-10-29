@@ -13,6 +13,8 @@ const config: Config = {
   fluxApiBaseUrl: "https://flux.test",
   coingeckoApiKey: "test-key",
   coingeckoBaseUrl: "https://cg.test/api/v3",
+  explorerUrls: ["https://ex1.test", "https://ex2.test"],
+  frankfurterBaseUrl: "https://fx.test",
   priceRefreshMs: 1_200_000,
   networkRefreshMs: 90_000,
   fluxMaxConcurrency: 2,
@@ -45,6 +47,10 @@ const node = (addr: string, tier: string, rank: number, extra: object = {}) => (
 interface MockState {
   /** HTTP status CoinGecko answers with (default 200). */
   cgStatus?: number;
+  /** HTTP status each explorer answers with (default 200). */
+  ex1Status?: number;
+  ex2Status?: number;
+  fxStatus?: number;
   failLists?: boolean;
   calls: string[];
   fluxStatus: "success" | "error";
@@ -57,6 +63,15 @@ function mockFetch(state: MockState): typeof fetch {
   return (async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     state.calls.push(url);
+    if (url.startsWith("https://ex1.test") || url.startsWith("https://ex2.test")) {
+      const status = (url.startsWith("https://ex1.test") ? state.ex1Status : state.ex2Status) ?? 200;
+      if (status !== 200) return json({ error: "nope" }, status);
+      return json({ status: 200, data: { rate: url.startsWith("https://ex1.test") ? 0.0681 : 0.0679, short: "FLUX" } });
+    }
+    if (url.startsWith("https://fx.test")) {
+      if (state.fxStatus && state.fxStatus !== 200) return json({ error: "nope" }, state.fxStatus);
+      return json({ amount: 1, base: "USD", date: "2026-10-28", rates: { CAD: 1.4, EUR: 0.9, GBP: 0.75, IDR: 18000 } });
+    }
     if (url.startsWith("https://cg.test")) {
       state.cgHeaders = (init?.headers as Record<string, string>) ?? null;
       if (state.cgStatus && state.cgStatus !== 200) return json({ error: "nope" }, state.cgStatus);
@@ -145,30 +160,68 @@ describe("GET /api/network", () => {
 });
 
 describe("GET /api/price", () => {
-  it("returns cached prices and sends the API key only to CoinGecko", async () => {
+  const cgCalls = (calls: string[]) => calls.filter((c) => c.startsWith("https://cg.test")).length;
+
+  it("uses the Flux explorer and exchange rates, without calling CoinGecko", async () => {
     const { app, state } = await setup();
     const res = await app.inject("/api/price");
     expect(res.statusCode).toBe(200);
     const body = res.json<PriceResponse>();
-    expect(body.prices.usd).toBe(0.066058);
-    expect(body.source).toBe("CoinGecko");
-    expect(state.cgHeaders?.["x-cg-demo-api-key"]).toBe("test-key");
-    expect(res.body).not.toContain("test-key");
-    // Serving the price again does not call CoinGecko again.
-    const before = state.calls.filter((c) => c.startsWith("https://cg.test")).length;
+    expect(body.source).toBe("Flux explorer");
+    expect(body.prices.usd).toBe(0.0681);
+    expect(body.prices.eur).toBeCloseTo(0.0681 * 0.9, 10);
+    expect(body.prices.idr).toBeCloseTo(0.0681 * 18000, 6);
+    expect(body.fxDate).toBe("2026-10-28");
+    expect(cgCalls(state.calls)).toBe(0);
+    // Serving the price again calls nothing.
+    const n = state.calls.length;
     await app.inject("/api/price");
-    expect(state.calls.filter((c) => c.startsWith("https://cg.test")).length).toBe(before);
+    expect(state.calls.length).toBe(n);
+  });
+
+  it("falls back to the backup explorer", async () => {
+    const { app, state } = await setup({ ex1Status: 502 });
+    expect((await app.inject("/api/price")).json<PriceResponse>().prices.usd).toBe(0.0679);
+    expect(cgCalls(state.calls)).toBe(0);
+  });
+
+  it("falls back to CoinGecko, sending the key only there, when both explorers fail", async () => {
+    const { app, state } = await setup({ ex1Status: 500, ex2Status: 503 });
+    const body = (await app.inject("/api/price")).json<PriceResponse>();
+    expect(body.source).toBe("CoinGecko");
+    expect(body.prices.usd).toBe(0.066058);
+    expect(state.cgHeaders?.["x-cg-demo-api-key"]).toBe("test-key");
+    const health = (await app.inject("/api/health")).json();
+    expect(health.priceSource.source).toBe("CoinGecko");
+    expect(health.priceSource.errors.explorer).toBe("HTTP 503");
+    expect(JSON.stringify(health)).not.toContain("test-key");
+  });
+
+  it("falls back to CoinGecko when exchange rates are unavailable", async () => {
+    const { app } = await setup({ fxStatus: 500 });
+    expect((await app.inject("/api/price")).json<PriceResponse>().source).toBe("CoinGecko");
+  });
+
+  it("fetches exchange rates once and reuses them if Frankfurter later fails", async () => {
+    const { app, price, state } = await setup();
+    await price.refresh();
+    expect(state.calls.filter((c) => c.startsWith("https://fx.test")).length).toBe(1);
+    state.fxStatus = 500;
+    await price.refresh();
+    expect((await app.inject("/api/price")).json<PriceResponse>().source).toBe("Flux explorer");
+    expect(cgCalls(state.calls)).toBe(0);
   });
 });
 
 describe("price failures", () => {
   it("reports why the price is missing without exposing the key, and retries sooner", async () => {
-    const { app, price } = await setup({ cgStatus: 429 });
+    const { app, price } = await setup({ ex1Status: 500, ex2Status: 500, cgStatus: 429 });
     expect((await app.inject("/api/price")).statusCode).toBe(503);
     const health = (await app.inject("/api/health")).json();
     expect(health.price).toBe(false);
     expect(health.version).toBe("test");
-    expect(health.priceSource).toMatchObject({ keySet: true, lastError: "HTTP 429", failuresInARow: 1 });
+    expect(health.priceSource).toMatchObject({ keySet: true, failuresInARow: 1 });
+    expect(health.priceSource.lastError).toBe("explorer: HTTP 500; coingecko: HTTP 429");
     expect(JSON.stringify(health)).not.toContain("test-key");
     const normal = 20 * 60_000;
     expect(price.nextDelayMs(normal)).toBe(2 * 60_000);
@@ -181,11 +234,11 @@ describe("price failures", () => {
   });
 
   it("goes back to the normal interval after a success", async () => {
-    const { price, state } = await setup({ cgStatus: 500 });
+    const { price, state } = await setup({ ex1Status: 500, ex2Status: 500, cgStatus: 500 });
     expect(price.getPrice()).toBeNull();
-    state.cgStatus = 200;
+    state.ex2Status = 200;
     await price.refresh();
-    expect(price.getPrice()?.prices.usd).toBe(0.066058);
+    expect(price.getPrice()?.prices.usd).toBe(0.0679);
     expect(price.status().lastError).toBeNull();
     expect(price.nextDelayMs(1_200_000)).toBe(1_200_000);
   });

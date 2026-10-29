@@ -52,9 +52,9 @@ export const id: Messages = {
     translation: "Sarankan terjemahan yang lebih baik",
     disclaimer:
       "Alat komunitas independen, tidak terafiliasi dengan Flux. Hanya estimasi, bukan nasihat keuangan. Progressive Node Rewards (bagi hasil pendapatan FluxCloud) tidak disertakan karena belum ada rumus yang dipublikasikan. Hadiah mengasumsikan node Anda tetap terkonfirmasi.",
-    credits: (coingecko: N) => (
+    credits: (source: N) => (
       <>
-        Data harga oleh {coingecko}. Data jaringan dari Flux API. Open source di bawah lisensi MIT.
+        Data harga: {source}. Data jaringan dari Flux API. Open source di bawah lisensi MIT.
       </>
     ),
   },
@@ -296,7 +296,7 @@ export const id: Messages = {
         <H>Dari mana angka berasal</H>
         <p>
           Tinggi blok, node aktif per tier, dan daftar DOS dan start berasal dari API jaringan Flux, diperbarui sekitar
-          setiap 90 detik. Harga FLUX berasal dari CoinGecko, diperbarui setiap 20 menit. Semua yang lain dihitung dari
+          setiap 90 detik. Harga FLUX dalam dolar AS berasal dari explorer Flux dan dikonversi ke mata uang lain dengan kurs harian Bank Sentral Eropa (melalui Frankfurter), dengan CoinGecko sebagai cadangan. Diperbarui setiap 20 menit. Semua yang lain dihitung dari
           itu.
         </p>
 

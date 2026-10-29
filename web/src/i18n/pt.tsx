@@ -52,9 +52,9 @@ export const pt: Messages = {
     translation: "Sugerir uma tradução melhor",
     disclaimer:
       "Ferramenta independente da comunidade, sem vínculo com a Flux. Apenas estimativas, não é aconselhamento financeiro. As Progressive Node Rewards (participação na receita do FluxCloud) não estão incluídas porque nenhuma fórmula foi publicada. As recompensas supõem que seus nodes continuem confirmados.",
-    credits: (coingecko: N) => (
+    credits: (source: N) => (
       <>
-        Dados de preço da {coingecko}. Dados da rede pela API da Flux. Código aberto sob a licença MIT.
+        Dados de preço: {source}. Dados da rede pela API da Flux. Código aberto sob a licença MIT.
       </>
     ),
   },
@@ -299,7 +299,7 @@ export const pt: Messages = {
         <H>De onde vêm os números</H>
         <p>
           A altura do bloco, os nodes ativos por nível e as listas DOS e de início vêm da API da rede Flux, atualizada a
-          cada 90 segundos mais ou menos. O preço do FLUX vem da CoinGecko, atualizado a cada 20 minutos. Todo o resto é
+          cada 90 segundos mais ou menos. O preço do FLUX em dólares vem do explorer da Flux e é convertido para outras moedas com as taxas de câmbio diárias do Banco Central Europeu (via Frankfurter), com a CoinGecko como reserva. É atualizado a cada 20 minutos. Todo o resto é
           calculado a partir disso.
         </p>
 
