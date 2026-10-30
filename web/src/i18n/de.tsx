@@ -358,8 +358,20 @@ export const de: Messages = {
     diagnosing: "Fehlersuche",
     unlock: "Collateral freigeben",
     disclosure: "Einige Links auf dieser Seite sind Affiliate-Links: Wenn du darüber kaufst, kann diese Seite eine Provision erhalten, ohne Mehrkosten für dich. Sie beeinflussen nie die Berechnungen.",
-    amazonNote: "Als Amazon-Partner verdient diese Seite an qualifizierten Verkäufen.",
     tableLink: "Was braucht man, um einen zu betreiben?",
+  },
+
+  privacy: {
+    button: "Datenschutz",
+    title: "Datenschutz",
+    close: "Schließen",
+    intro: "Dieser Rechner hat keine Konten und setzt keine Cookies.",
+    storage: "Deine Einstellungen stehen in der Seitenadresse, Design- und Sprachwahl nur in deinem eigenen Browser. Nichts davon wird an uns gesendet.",
+    analytics: "Besuche werden mit Cloudflare Web Analytics gezählt, das keine Cookies nutzt und dich nicht über andere Websites verfolgt.",
+    lookup: "Die Node-Abfrage sendet die eingegebene Adresse an die API des Flux-Netzwerks, um die Nodes zu finden. Diese Seite speichert sie nicht und schreibt sie nicht in ihre Logs.",
+    logs: "Die Server-Logs erfassen, welche Seiten aufgerufen werden, aber keine IP-Adressen und keine abgefragten Adressen.",
+    affiliate: "Einige Links zu Amazon enthalten einen Partner-Tag. Wenn du einem folgst, kann Amazon nach seinen eigenen Datenschutzhinweisen Cookies setzen. Diese Seite gibt keine Preise oder persönlichen Daten weiter.",
+    contact: "Fragen: Eröffne ein Issue auf GitHub (Link unten).",
   },
 
   how: {

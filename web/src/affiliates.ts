@@ -8,11 +8,17 @@
 
 export const AFFILIATES = {
   /** Amazon Associates tracking ID, e.g. "fluxnodecalc-20". Empty = plain links. */
-  amazonTag: "",
+  amazonTag: "dawg4037-20",
   amazonDomain: "www.amazon.com",
   /** InFlux / FluxCloud referral code, once their program launches. Empty = plain links. */
   fluxReferral: "",
 };
+
+/**
+ * Amazon's required statement (Associates Operating Agreement). Kept word for word in English and
+ * shown in every language, next to the links and in the footer.
+ */
+export const AMAZON_STATEMENT = "As an Amazon Associate I earn from qualifying purchases.";
 
 export const affiliatesActive = () => AFFILIATES.amazonTag !== "" || AFFILIATES.fluxReferral !== "";
 

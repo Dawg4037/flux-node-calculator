@@ -9,6 +9,8 @@ import { ProjectionsTab } from "./components/ProjectionsTab.tsx";
 import { RunNodeTab } from "./components/RunNodeTab.tsx";
 import { Contribute } from "./components/Contribute.tsx";
 import { HowItWorksButton, HowItWorksProvider } from "./components/HowItWorks.tsx";
+import { PrivacyButton } from "./components/Privacy.tsx";
+import { AMAZON_STATEMENT, AFFILIATES } from "./affiliates.ts";
 import { Notice } from "./components/ui.tsx";
 import { useLang } from "./i18n/index.tsx";
 import { useTheme } from "./theme.ts";
@@ -153,11 +155,15 @@ export function App() {
           <li>
             <HowItWorksButton />
           </li>
+          <li>
+            <PrivacyButton />
+          </li>
           <li className="num text-muted">v{__APP_VERSION__}</li>
         </ul>
         <p>
           {t.app.disclaimer}
         </p>
+        {AFFILIATES.amazonTag && <p lang="en">{AMAZON_STATEMENT}</p>}
         <p>
           {t.app.credits(
             price.data?.source === "CoinGecko" ? (

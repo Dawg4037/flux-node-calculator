@@ -358,8 +358,20 @@ export const fr: Messages = {
     diagnosing: "Diagnostiquer les problèmes",
     unlock: "Débloquer le collatéral",
     disclosure: "Certains liens de cette page sont des liens d'affiliation : si vous achetez par leur biais, ce site peut toucher une commission, sans surcoût pour vous. Ils n'influencent jamais les calculs.",
-    amazonNote: "En tant que Partenaire Amazon, ce site réalise un bénéfice sur les achats remplissant les conditions requises.",
     tableLink: "Que faut-il pour en faire tourner un ?",
+  },
+
+  privacy: {
+    button: "Confidentialité",
+    title: "Confidentialité",
+    close: "Fermer",
+    intro: "Ce calculateur n'a pas de comptes et ne dépose aucun cookie.",
+    storage: "Vos réglages sont dans l'adresse de la page, et vos choix de thème et de langue dans votre propre navigateur. Rien ne nous est envoyé.",
+    analytics: "Les visites sont comptées avec Cloudflare Web Analytics, qui n'utilise pas de cookies et ne vous suit pas d'un site à l'autre.",
+    lookup: "La recherche de nœuds envoie l'adresse saisie à l'API du réseau Flux pour trouver ses nœuds. Ce site ne la conserve pas et ne l'inscrit pas dans ses journaux.",
+    logs: "Les journaux du serveur notent les pages demandées, mais pas les adresses IP ni les adresses que vous recherchez.",
+    affiliate: "Certains liens vers Amazon contiennent un identifiant d'affiliation. Si vous en suivez un, Amazon peut déposer ses propres cookies selon sa politique de confidentialité. Ce site ne partage ni prix ni données personnelles.",
+    contact: "Questions : ouvrez une issue sur GitHub (lien ci-dessous).",
   },
 
   how: {

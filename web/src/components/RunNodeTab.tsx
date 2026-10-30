@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { COLLATERAL, TIERS, TIER_LABEL, project, type Tier } from "../../../shared/rewards.ts";
-import { AFFILIATES, HARDWARE_PICKS, affiliatesActive, pickUrl } from "../affiliates.ts";
+import { AFFILIATES, AMAZON_STATEMENT, HARDWARE_PICKS, affiliatesActive, pickUrl } from "../affiliates.ts";
 import { currentLocale, fmtInt, fmtMoney } from "../format.ts";
 import { useLang } from "../i18n/index.tsx";
 import { GUIDE_CHECKED, LINKS, TIER_HARDWARE } from "../nodeGuide.ts";
@@ -215,6 +215,11 @@ export function RunNodeTab({
         </div>
 
         <p className="mt-5 max-w-prose text-sm">{t.hwIntro}</p>
+        {affiliatesActive() && (
+          <p className="mt-3 max-w-prose rounded-md border border-line px-3 py-2 text-xs text-muted">
+            {t.disclosure} {amazon && <span lang="en">{AMAZON_STATEMENT}</span>}
+          </p>
+        )}
         <ul className="mt-3 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
           {HARDWARE_PICKS.map((pick) => {
             const tier = pick.id === "cumulus" || pick.id === "nimbus" || pick.id === "stratus" ? pick.id : null;
@@ -265,11 +270,6 @@ export function RunNodeTab({
         </p>
       </Section>
 
-      {affiliatesActive() && (
-        <p className="border-t border-line pt-4 text-xs text-muted">
-          {t.disclosure} {amazon && t.amazonNote}
-        </p>
-      )}
     </div>
   );
 }

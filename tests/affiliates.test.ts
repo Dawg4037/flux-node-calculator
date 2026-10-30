@@ -1,9 +1,17 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { AFFILIATES, HARDWARE_PICKS, affiliatesActive, amazonSearch, pickUrl } from "../web/src/affiliates.ts";
 
 describe("affiliate links", () => {
-  afterEach(() => {
+  const realTag = AFFILIATES.amazonTag;
+  beforeEach(() => {
     AFFILIATES.amazonTag = "";
+  });
+  afterAll(() => {
+    AFFILIATES.amazonTag = realTag;
+  });
+
+  it("ship with the site's Amazon tag", () => {
+    expect(realTag).toBe("dawg4037-20");
   });
 
   it("are plain links until a tag is set", () => {

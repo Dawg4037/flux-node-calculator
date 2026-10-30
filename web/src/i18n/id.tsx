@@ -353,8 +353,20 @@ export const id: Messages = {
     diagnosing: "Mendiagnosis masalah",
     unlock: "Membuka kunci jaminan",
     disclosure: "Beberapa tautan di halaman ini adalah tautan afiliasi: jika Anda membeli melaluinya, situs ini bisa mendapat komisi tanpa biaya tambahan bagi Anda. Tautan ini tidak pernah memengaruhi perhitungan.",
-    amazonNote: "Sebagai Amazon Associate, situs ini memperoleh penghasilan dari pembelian yang memenuhi syarat.",
     tableLink: "Apa yang dibutuhkan untuk menjalankannya?",
+  },
+
+  privacy: {
+    button: "Privasi",
+    title: "Privasi",
+    close: "Tutup",
+    intro: "Kalkulator ini tidak memiliki akun dan tidak memasang cookie.",
+    storage: "Pengaturan Anda disimpan di alamat halaman, sedangkan pilihan tema dan bahasa di browser Anda sendiri. Tidak ada yang dikirim kepada kami.",
+    analytics: "Kunjungan dihitung dengan Cloudflare Web Analytics, yang tidak memakai cookie dan tidak melacak Anda di situs lain.",
+    lookup: "Pencarian node mengirim alamat yang Anda masukkan ke API jaringan Flux untuk menemukan node-nya. Situs ini tidak menyimpannya dan tidak mencatatnya di log.",
+    logs: "Log server mencatat halaman yang diminta, tetapi tidak mencatat alamat IP maupun alamat yang Anda cari.",
+    affiliate: "Beberapa tautan ke Amazon membawa tag afiliasi. Jika Anda mengikutinya, Amazon dapat memasang cookie-nya sendiri sesuai pemberitahuan privasi Amazon. Situs ini tidak membagikan harga atau data pribadi.",
+    contact: "Pertanyaan: buka issue di GitHub (tautan di bawah).",
   },
 
   how: {

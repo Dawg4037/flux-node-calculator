@@ -367,8 +367,20 @@ export const pl: Messages = {
     diagnosing: "Diagnozowanie problemów",
     unlock: "Odblokowanie zabezpieczenia",
     disclosure: "Niektóre linki na tej stronie są linkami partnerskimi: jeśli kupisz przez nie, ta strona może otrzymać prowizję bez dodatkowych kosztów dla Ciebie. Nigdy nie wpływają na obliczenia.",
-    amazonNote: "Jako partner Amazon ta strona zarabia na kwalifikujących się zakupach.",
     tableLink: "Czego potrzeba, aby go uruchomić?",
+  },
+
+  privacy: {
+    button: "Prywatność",
+    title: "Prywatność",
+    close: "Zamknij",
+    intro: "Ten kalkulator nie ma kont i nie używa plików cookie.",
+    storage: "Twoje ustawienia są zapisane w adresie strony, a wybrany motyw i język w Twojej przeglądarce. Nic nie jest do nas wysyłane.",
+    analytics: "Odwiedziny są liczone przez Cloudflare Web Analytics, które nie używa plików cookie i nie śledzi Cię na innych stronach.",
+    lookup: "Wyszukiwanie węzłów wysyła wpisany adres do API sieci Flux, aby znaleźć jego węzły. Ta strona go nie przechowuje ani nie zapisuje w logach.",
+    logs: "Logi serwera zapisują, które strony są otwierane, ale nie adresy IP ani wyszukiwane adresy.",
+    affiliate: "Niektóre linki do Amazon zawierają identyfikator partnerski. Jeśli w niego klikniesz, Amazon może ustawić własne pliki cookie zgodnie ze swoją polityką prywatności. Ta strona nie udostępnia cen ani danych osobowych.",
+    contact: "Pytania: zgłoś issue na GitHubie (link poniżej).",
   },
 
   how: {

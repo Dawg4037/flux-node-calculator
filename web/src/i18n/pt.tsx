@@ -357,8 +357,20 @@ export const pt: Messages = {
     diagnosing: "Diagnóstico de problemas",
     unlock: "Desbloquear o colateral",
     disclosure: "Alguns links desta página são de afiliados: se você comprar por eles, este site pode ganhar uma comissão sem custo extra para você. Eles nunca afetam os cálculos.",
-    amazonNote: "Como associado da Amazon, este site ganha com compras qualificadas.",
     tableLink: "O que é preciso para rodar um?",
+  },
+
+  privacy: {
+    button: "Privacidade",
+    title: "Privacidade",
+    close: "Fechar",
+    intro: "Esta calculadora não tem contas e não usa cookies.",
+    storage: "Suas configurações ficam no endereço da página, e o tema e o idioma escolhidos ficam no seu próprio navegador. Nada é enviado para nós.",
+    analytics: "As visitas são contadas pelo Cloudflare Web Analytics, que não usa cookies nem segue você por outros sites.",
+    lookup: "A consulta de nodes envia o endereço digitado para a API da rede Flux para encontrar os nodes. Este site não o armazena nem o grava nos logs.",
+    logs: "Os logs do servidor registram quais páginas são acessadas, mas não endereços IP nem os endereços consultados.",
+    affiliate: "Alguns links para a Amazon têm uma tag de afiliado. Se você clicar em um, a Amazon pode definir os próprios cookies, conforme o aviso de privacidade da Amazon. Nenhum preço ou dado pessoal é compartilhado por este site.",
+    contact: "Dúvidas: abra uma issue no GitHub (link abaixo).",
   },
 
   how: {

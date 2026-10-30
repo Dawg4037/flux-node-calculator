@@ -363,8 +363,20 @@ export const en = {
     unlock: "Unlocking your collateral",
     disclosure:
       "Some links on this page are affiliate links: if you buy through them, this site may earn a commission at no extra cost to you. They never affect the calculations.",
-    amazonNote: "As an Amazon Associate, this site earns from qualifying purchases.",
     tableLink: "What does it take to run one?",
+  },
+
+  privacy: {
+    button: "Privacy",
+    title: "Privacy",
+    close: "Close",
+    intro: "This calculator has no accounts and sets no cookies.",
+    storage: "Your settings are kept in the page address, and your theme and language choices in your own browser. Nothing is sent to us.",
+    analytics: "Visits are counted with Cloudflare Web Analytics, which doesn't use cookies or follow you across sites.",
+    lookup: "Node lookup sends the address you enter to the Flux network API to find its nodes. This site doesn't store it or write it to its logs.",
+    logs: "The server's logs record which pages are requested, but not IP addresses or the addresses you look up.",
+    affiliate: "Some links to Amazon carry an affiliate tag. If you follow one, Amazon may set its own cookies under Amazon's privacy notice. No prices or personal data are shared from this site.",
+    contact: "Questions: open an issue on GitHub (link below).",
   },
 
   how: {
