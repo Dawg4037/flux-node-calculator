@@ -331,23 +331,6 @@ export const en = {
     startZelcore: "Start via Zelcore",
     step5: "Check it with your payment address in Node lookup.",
     openLookup: "Open Node lookup",
-    hwTitle: "Hardware ideas for a home node",
-    budgetIntro: "What a node earns decides what its hardware is worth. One node per tier, over the next 2 years at today's price and network size:",
-    budgetMonth: (m: string) => `${m} this month`,
-    budgetNote: "That's the most hardware, power and hosting can cost for the node to pay for itself in 2 years. It already counts the yearly reward cut and parallel assets ending (per your settings).",
-    budgetNoPrice: "Shown once the FLUX price loads.",
-    hwIntro: "Start with what you already own: an old desktop or laptop with TPM 2.0 costs nothing. Most operators run used or renewed mini PCs, or one machine with several nodes in Proxmox, and spend their money on RAM, storage and a UPS.",
-    picks: {
-      cumulus: { label: "Cumulus: used or renewed mini PC", note: "4+ threads, 8 GB+ RAM, 256 GB+ SSD. Beelink, GMKtec and Lenovo ThinkCentre Tiny are common picks." },
-      nimbus: { label: "Nimbus: mini PC with 8 threads and 32 GB", note: "Ryzen 7 5000-series mini PCs are a popular fit." },
-      stratus: { label: "Stratus: 16 threads and 64 GB", note: "A Ryzen 9 mini PC or a used workstation, usually run in Proxmox." },
-      multi: { label: "Several nodes: used workstation or server", note: "Lots of RAM and cores, with each node as a Proxmox VM. Up to 8 nodes per home IP." },
-      ram: { label: "RAM upgrade (DDR4 SO-DIMM)", note: "Check which RAM type your machine takes first." },
-      nvme: { label: "NVMe SSD", note: "1 TB covers a Stratus. Check the write speed: 180 MB/s, or 400 MB/s for Stratus." },
-      ups: { label: "UPS battery backup", note: "A short power cut can keep a node offline long enough to miss confirmations." },
-      nic: { label: "Intel 2.5 GbE network card", note: "For pfSense or OPNsense in front of several nodes." },
-    },
-    pricesNote: "RAM and SSD prices have risen sharply. Compare with the budget above before you buy.",
     noHwTitle: "No hardware?",
     titanText:
       "Titan staking: stake from 50 FLUX and Flux runs the nodes. Your FLUX is locked for 3, 6 or 12 months, and there are no parallel-asset mining rewards.",
@@ -356,13 +339,6 @@ export const en = {
       "Managed FluxNode service: a provider hosts and runs your node, and the collateral stays in your wallet. Check the fees first: they can be more than a small node earns. You can enter them as running costs on the Earnings tab.",
     managedLink: "Managed FluxNode service",
     fluxHubText: "FluxHub, run by community members: people with collateral but no hardware get a node hosted by operators with spare machines. You can try it free at first.",
-    healthTitle: "Keeping it healthy",
-    healthText:
-      "A node is only paid while it's confirmed. If it misses confirmations it lands on the DOS list and earns nothing until you start it again. The usual causes are wrong collateral details or a daemon that isn't synced.",
-    diagnosing: "Diagnosing issues",
-    unlock: "Unlocking your collateral",
-    disclosure:
-      "Some links on this page are affiliate links: if you buy through them, this site may earn a commission at no extra cost to you. They never affect the calculations.",
     tableLink: "What does it take to run one?",
   },
 

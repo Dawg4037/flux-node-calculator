@@ -77,3 +77,15 @@ Add two repository secrets under Settings → Secrets and variables → Actions:
 - `DOCKERHUB_TOKEN`: a Docker Hub access token (Docker Hub → Account settings → Personal access tokens) with **Read & Write** scope only.
 
 To publish without pushing to `release` (e.g. to retry), use Actions → Publish Docker image → Run workflow.
+
+## Private preview
+
+Push to the `preview` branch to build `dawg4037/flux-node-calculator:preview` (never `latest` or a version, so FluxCloud is unaffected), then run it locally:
+
+```sh
+docker pull dawg4037/flux-node-calculator:preview
+docker run --rm -p 8080:8080 dawg4037/flux-node-calculator:preview
+```
+
+Open http://localhost:8080. It uses live Flux and price data. When it looks right, push the same commit to `release`.
+

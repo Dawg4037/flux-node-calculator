@@ -1,10 +1,8 @@
-import { useMemo, type ReactNode } from "react";
-import { COLLATERAL, TIERS, TIER_LABEL, project, type Tier } from "../../../shared/rewards.ts";
-import { AFFILIATES, AMAZON_STATEMENT, HARDWARE_PICKS, affiliatesActive, pickUrl } from "../affiliates.ts";
-import { currentLocale, fmtInt, fmtMoney } from "../format.ts";
+import type { ReactNode } from "react";
+import { COLLATERAL, TIERS, TIER_LABEL } from "../../../shared/rewards.ts";
+import { currentLocale, fmtInt } from "../format.ts";
 import { useLang } from "../i18n/index.tsx";
 import { GUIDE_CHECKED, LINKS, TIER_HARDWARE } from "../nodeGuide.ts";
-import { parallelAssetsFor, type Market } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { Section, TierSwatch } from "./ui.tsx";
 
@@ -32,56 +30,15 @@ function Card({ title, tag, children }: { title: string; tag?: string; children:
   );
 }
 
-/** Months used for the hardware budget: what a node earns in this time is what its hardware can cost. */
-const BUDGET_MONTHS = 24;
-
-export function RunNodeTab({
-  state,
-  update,
-  market,
-}: {
-  state: AppState;
-  update: (p: Partial<AppState>) => void;
-  market: Market | null;
-}) {
+export function RunNodeTab({ update }: { update: (p: Partial<AppState>) => void }) {
   const t = useLang().t.run;
-  const c = state.currency;
 
-  // Revenue of one node per tier at today's price and network size, including the yearly cut and
-  // parallel assets (per the visitor's settings) until they end.
-  const budget = useMemo(() => {
-    if (!market || market.price === null) return null;
-    const pa = parallelAssetsFor(state, market);
-    const zero = { cumulus: 0, nimbus: 0, stratus: 0 };
-    return Object.fromEntries(
-      TIERS.map((tier) => {
-        const r = project({
-          startHeight: market.network.height,
-          months: BUDGET_MONTHS,
-          yourNodes: { ...zero, [tier]: 1 },
-          networkNodes: market.network.nodes,
-          networkGrowthPctPerYear: 0,
-          startPrice: market.price ?? 0,
-          priceChangePctPerYear: 0,
-          monthlyCostPerNode: zero,
-          upfrontCost: 0,
-          collateralPrice: 0,
-          includeCollateralInBreakEven: false,
-          parallelAssets: pa,
-        });
-        const total = r.months.reduce((s, m) => s + m.revenue, 0);
-        return [tier, { month: r.months[0]?.revenue ?? 0, total }];
-      }),
-    ) as Record<Tier, { month: number; total: number }>;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [market, state.pa, state.paCount, state.paValue, state.paEnd]);
   const checked = new Date(`${GUIDE_CHECKED}-01T00:00:00Z`).toLocaleDateString(currentLocale(), {
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   });
   const tiers = TIERS.slice().reverse();
-  const amazon = AFFILIATES.amazonTag !== "";
 
   const rows: Array<[string, (tier: (typeof tiers)[number]) => string]> = [
     [t.collateral, (tier) => `${fmtInt(COLLATERAL[tier])} FLUX`],
@@ -192,53 +149,6 @@ export function RunNodeTab({
         </ol>
       </Section>
 
-      <Section title={t.hwTitle}>
-        <div className="rounded-md border border-line bg-surface p-4">
-          <p className="text-sm text-muted">{t.budgetIntro}</p>
-          {budget ? (
-            <dl className="mt-3 grid gap-4 sm:grid-cols-3">
-              {tiers.map((tier) => (
-                <div key={tier}>
-                  <dt className="flex items-center gap-2 text-sm text-muted">
-                    <TierSwatch tier={tier} />
-                    {TIER_LABEL[tier]}
-                  </dt>
-                  <dd className="num text-xl font-semibold">{fmtMoney(budget[tier].total, c)}</dd>
-                  <dd className="num text-xs text-muted">{t.budgetMonth(fmtMoney(budget[tier].month, c))}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="mt-2 text-sm">{t.budgetNoPrice}</p>
-          )}
-          <p className="mt-3 text-xs text-muted">{t.budgetNote}</p>
-        </div>
-
-        <p className="mt-5 max-w-prose text-sm">{t.hwIntro}</p>
-        {affiliatesActive() && (
-          <p className="mt-3 max-w-prose rounded-md border border-line px-3 py-2 text-xs text-muted">
-            {t.disclosure} {amazon && <span lang="en">{AMAZON_STATEMENT}</span>}
-          </p>
-        )}
-        <ul className="mt-3 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
-          {HARDWARE_PICKS.map((pick) => {
-            const tier = pick.id === "cumulus" || pick.id === "nimbus" || pick.id === "stratus" ? pick.id : null;
-            return (
-              <li key={pick.id}>
-                <span className="flex items-center gap-2">
-                  {tier && <TierSwatch tier={tier} />}
-                  <Ext href={pickUrl(pick)} sponsored={amazon}>
-                    {t.picks[pick.id].label}
-                  </Ext>
-                </span>
-                <span className="block text-xs text-muted">{t.picks[pick.id].note}</span>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="mt-3 text-xs text-muted">{t.pricesNote}</p>
-      </Section>
-
       <Section title={t.noHwTitle}>
         <div className="grid gap-6 md:grid-cols-3">
           <div className="text-sm">
@@ -262,13 +172,6 @@ export function RunNodeTab({
         </div>
       </Section>
 
-      <Section title={t.healthTitle}>
-        <p className="max-w-prose text-sm">{t.healthText}</p>
-        <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <Ext href={LINKS.diagnosing}>{t.diagnosing}</Ext>
-          <Ext href={LINKS.unlock}>{t.unlock}</Ext>
-        </p>
-      </Section>
 
     </div>
   );

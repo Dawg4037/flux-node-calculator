@@ -10,7 +10,7 @@ import { RunNodeTab } from "./components/RunNodeTab.tsx";
 import { Contribute } from "./components/Contribute.tsx";
 import { HowItWorksButton, HowItWorksProvider } from "./components/HowItWorks.tsx";
 import { PrivacyButton } from "./components/Privacy.tsx";
-import { AMAZON_STATEMENT, AFFILIATES } from "./affiliates.ts";
+import { AMAZON_STATEMENT, amazonDisclosureNeeded } from "./affiliates.ts";
 import { Notice } from "./components/ui.tsx";
 import { useLang } from "./i18n/index.tsx";
 import { useTheme } from "./theme.ts";
@@ -98,7 +98,7 @@ export function App() {
 
           <div id={`panel-${state.tab}`} role="tabpanel" aria-labelledby={`tab-${state.tab}`}>
             {state.tab === "run" ? (
-              <RunNodeTab state={state} update={update} market={market} />
+              <RunNodeTab update={update} />
             ) : state.tab === "lookup" ? (
               <LookupTab state={state} update={update} price={price.data?.prices[state.currency] ?? null} />
             ) : !market ? (
@@ -163,7 +163,7 @@ export function App() {
         <p>
           {t.app.disclaimer}
         </p>
-        {AFFILIATES.amazonTag && <p lang="en">{AMAZON_STATEMENT}</p>}
+        {amazonDisclosureNeeded() && <p lang="en">{AMAZON_STATEMENT}</p>}
         <p>
           {t.app.credits(
             price.data?.source === "CoinGecko" ? (

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AMAZON_STATEMENT, affiliatesActive } from "../affiliates.ts";
+import { AMAZON_STATEMENT, amazonDisclosureNeeded } from "../affiliates.ts";
 import { useT } from "../i18n/index.tsx";
 
 /** Footer link that opens the privacy notice. */
@@ -50,7 +50,7 @@ export function PrivacyButton() {
               <li>{t.analytics}</li>
               <li>{t.lookup}</li>
               <li>{t.logs}</li>
-              {affiliatesActive() && (
+              {amazonDisclosureNeeded() && (
                 <li>
                   {t.affiliate} <span lang="en">{AMAZON_STATEMENT}</span>
                 </li>

@@ -20,6 +20,16 @@ export const AFFILIATES = {
  */
 export const AMAZON_STATEMENT = "As an Amazon Associate I earn from qualifying purchases.";
 
+/**
+ * Whether any Amazon links are shown on the site right now. The hardware picks were taken off
+ * the Run a node tab (Oct 2026); turn this back on when Amazon links return, so the required
+ * statement and privacy note show again.
+ */
+export const AMAZON_LINKS_ON_SITE = false;
+
+/** True when an affiliate link is actually on the page (Amazon needs its statement then). */
+export const amazonDisclosureNeeded = () => AMAZON_LINKS_ON_SITE && AFFILIATES.amazonTag !== "";
+
 export const affiliatesActive = () => AFFILIATES.amazonTag !== "" || AFFILIATES.fluxReferral !== "";
 
 /** An Amazon search link (search results, so it never points at a sold-out or repriced item). */
