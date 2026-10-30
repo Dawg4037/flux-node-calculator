@@ -16,8 +16,21 @@ import type { AppState } from "../state.ts";
 import { HowItWorksButton } from "./HowItWorks.tsx";
 import { Section, TierSwatch } from "./ui.tsx";
 
-export function NetworkTable({ network, state }: { network: NetworkResponse; state: AppState }) {
-  const t = useT().network;
+export function NetworkTable({
+  network,
+  state,
+  update,
+}: {
+  network: NetworkResponse;
+  state: AppState;
+  update: (p: Partial<AppState>) => void;
+}) {
+  const all = useT();
+  const t = all.network;
+  const openRun = () => {
+    update({ tab: "run" });
+    document.getElementById("tab-run")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
   const pa = paMult > 0 ? parallelAssetsFor(state, { network, price: 0 }) : undefined;
   return (
@@ -25,7 +38,10 @@ export function NetworkTable({ network, state }: { network: NetworkResponse; sta
       title={t.title}
       aside={
         <>
-          {t.live} <HowItWorksButton className="text-ink" />
+          {t.live} <HowItWorksButton className="text-ink" /> ·{" "}
+          <button type="button" className="text-ink underline" onClick={openRun}>
+            {all.run.tableLink}
+          </button>
         </>
       }
     >

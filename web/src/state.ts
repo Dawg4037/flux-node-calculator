@@ -10,7 +10,7 @@ import {
   type Tier,
 } from "../../shared/rewards.ts";
 
-export const TABS = ["earnings", "projections", "next", "lookup"] as const;
+export const TABS = ["earnings", "projections", "next", "lookup", "run"] as const;
 export type Tab = (typeof TABS)[number];
 
 export interface Setup {
