@@ -38,7 +38,7 @@ export const en = {
   },
 
   app: {
-    tabs: { earnings: "Earnings and ROI", projections: "Projections", next: "Next node", lookup: "Node lookup", run: "Run a node" },
+    tabs: { earnings: "Earnings and ROI", projections: "Projections", next: "Next node", lookup: "Node lookup" },
     tablist: "Calculator sections",
     loading: "Loading",
     networkError: "Can't reach the Flux network right now. Retrying.",
@@ -286,60 +286,6 @@ export const en = {
     startingMany: (n: number, parts: string, when: string) =>
       `${n} nodes at this address are starting (${parts}). The first must confirm ${when}.`,
     updated: (when: string) => `Updated ${when}. Node IP addresses are never shown.`,
-  },
-
-  run: {
-    intro: (checked: string) =>
-      `What it takes to run a FluxNode yourself, with links to Flux's official guides. Requirements change with FluxOS updates; these were checked in ${checked}.`,
-    needTitle: "What you need",
-    collateral: "Collateral",
-    cpu: "CPU",
-    coresThreads: (cores: number, threads: number) => `${cores} cores / ${threads} threads`,
-    ram: "RAM",
-    ssd: "SSD / NVMe",
-    eps: "Benchmark score (EPS)",
-    bandwidth: "Bandwidth",
-    disk: "Disk write speed",
-    needNote:
-      "Every node has to pass Flux's benchmark before it joins, needs a public IP address, and should stay online (about 97% uptime).",
-    officialSpecs: "Official requirements",
-    homeTitle: "Home or data center",
-    homeArcane:
-      "Home nodes must run ArcaneOS, Flux's secure node operating system. Without it, a home node stops getting new apps and ends up on the DOS list.",
-    homeHardware: "ArcaneOS needs an AMD64 (x86-64) machine with TPM 2.0 and UEFI. Most modern PCs and mini PCs have both.",
-    homeNetwork:
-      "Your router must support UPnP or DMZ. Up to 8 nodes can share one home network; more than one needs UPnP.",
-    dataCenter:
-      "Data center and VPS nodes can still use the legacy setup, but enterprise apps only run on ArcaneOS, and few VPS providers support the Secure Boot ArcaneOS needs in a virtual machine.",
-    arcaneGuide: "ArcaneOS install guide",
-    legacyGuide: "Legacy setup guide",
-    walletTitle: "Wallet",
-    sspTag: "For security",
-    sspText:
-      "For nodes, collateral and larger amounts. Every transaction needs approval on two of your devices: the browser extension and the SSP Key phone app. Open source and audited by Halborn. Starts nodes and claims parallel assets.",
-    zelcoreTag: "For everyday use",
-    zelcoreText:
-      "Desktop, phone and browser, with 80+ chains, swaps and buying crypto in the app. Also starts nodes and claims parallel assets.",
-    guide2026: "Flux's guide: How to run a FluxNode in 2026",
-    stepsTitle: "Steps",
-    step1: "Get the collateral: 1,000, 12,500 or 40,000 FLUX. Careful: “Datamine FLUX” is a different coin.",
-    step1Link: "Exchanges that list FLUX",
-    step2: "Send exactly that amount to your SSP Wallet or Zelcore in one transaction.",
-    step3: "Install the node: ArcaneOS for a home node, or the legacy setup in a data center.",
-    step4: "Start the node from your wallet. It has to confirm within about 2 hours.",
-    startSsp: "Start via SSP",
-    startZelcore: "Start via Zelcore",
-    step5: "Check it with your payment address in Node lookup.",
-    openLookup: "Open Node lookup",
-    noHwTitle: "No hardware?",
-    titanText:
-      "Titan staking: stake from 50 FLUX and Flux runs the nodes. Your FLUX is locked for 3, 6 or 12 months, and there are no parallel-asset mining rewards.",
-    titanLink: "Titan guide",
-    managedText:
-      "Managed FluxNode service: a provider hosts and runs your node, and the collateral stays in your wallet. Check the fees first: they can be more than a small node earns. You can enter them as running costs on the Earnings tab.",
-    managedLink: "Managed FluxNode service",
-    fluxHubText: "FluxHub, run by community members: people with collateral but no hardware get a node hosted by operators with spare machines. You can try it free at first.",
-    tableLink: "What does it take to run one?",
   },
 
   privacy: {

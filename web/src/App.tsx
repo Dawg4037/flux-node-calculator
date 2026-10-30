@@ -6,7 +6,6 @@ import { LookupTab } from "./components/LookupTab.tsx";
 import { NetworkTable } from "./components/NetworkTable.tsx";
 import { NextNodeTab } from "./components/NextNodeTab.tsx";
 import { ProjectionsTab } from "./components/ProjectionsTab.tsx";
-import { RunNodeTab } from "./components/RunNodeTab.tsx";
 import { Contribute } from "./components/Contribute.tsx";
 import { HowItWorksButton, HowItWorksProvider } from "./components/HowItWorks.tsx";
 import { PrivacyButton } from "./components/Privacy.tsx";
@@ -72,7 +71,7 @@ export function App() {
           <Notice tone="error">{t.app.priceError}</Notice>
         )}
 
-        {network.data && <NetworkTable network={network.data} state={state} update={update} />}
+        {network.data && <NetworkTable network={network.data} state={state} />}
 
         <section className="border-t border-line pt-6">
           <div role="tablist" aria-label={t.app.tablist} className="mb-8 flex gap-1 overflow-x-auto border-b border-line">
@@ -97,9 +96,7 @@ export function App() {
           </div>
 
           <div id={`panel-${state.tab}`} role="tabpanel" aria-labelledby={`tab-${state.tab}`}>
-            {state.tab === "run" ? (
-              <RunNodeTab update={update} />
-            ) : state.tab === "lookup" ? (
+            {state.tab === "lookup" ? (
               <LookupTab state={state} update={update} price={price.data?.prices[state.currency] ?? null} />
             ) : !market ? (
               <div className="h-64 animate-pulse rounded-md bg-line/30" aria-label={t.app.loading} />

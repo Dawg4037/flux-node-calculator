@@ -5,7 +5,6 @@ A public FluxNode reward calculator, hosted on FluxCloud.
 - **Earnings and ROI** — nodes and running costs in; FLUX per day/month/year, net profit, yearly reward rate, and break-even out. Compare two setups side by side.
 - **Projections** — month-by-month earnings across the scheduled 10% reward reductions, with network-size and low/middle/high price assumptions.
 - **Next node** — how long until your rewards pay for another node's collateral, per tier, and what happens if you keep reinvesting (year by year).
-- **Run a node** — what it takes to run a FluxNode: hardware per tier, home (ArcaneOS) vs data center, SSP Wallet for security and Zelcore for everyday use, the steps with links to Flux's official guides, hardware search links, and Titan or managed nodes for people without hardware. Requirements and links live in `web/src/nodeGuide.ts`; affiliate IDs and curated hardware picks in `web/src/affiliates.ts`. Amazon links carry the Associates tag and `rel="sponsored"`; Amazon's required statement appears next to the links and in the footer, and the footer's Privacy notice explains what the site does and doesn't collect.
 - **Node lookup** — enter a payment address to see your nodes and their health (confirmed, on the DOS list, or starting), queue position, next and last payout, and the last 30 days of rewards received vs. expected.
 
 Every setup is stored in the URL, so a calculation can be shared as a link. A "How the math works" panel explains every calculation with live numbers.
