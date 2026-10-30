@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { AFFILIATES, affiliatesActive, amazonSearch } from "../web/src/affiliates.ts";
+import { AFFILIATES, HARDWARE_PICKS, affiliatesActive, amazonSearch, pickUrl } from "../web/src/affiliates.ts";
 
 describe("affiliate links", () => {
   afterEach(() => {
@@ -18,5 +18,14 @@ describe("affiliate links", () => {
     AFFILIATES.amazonTag = "example-20";
     expect(affiliatesActive()).toBe(true);
     expect(new URL(amazonSearch("ups")).searchParams.get("tag")).toBe("example-20");
+  });
+
+  it("link a pick to a specific product when one is set, else to a search", () => {
+    const pick = HARDWARE_PICKS[0]!;
+    expect(pickUrl(pick)).toContain("/s?k=");
+    AFFILIATES.amazonTag = "example-20";
+    const url = new URL(pickUrl({ ...pick, asin: "B0TEST1234" }));
+    expect(url.pathname).toBe("/dp/B0TEST1234");
+    expect(url.searchParams.get("tag")).toBe("example-20");
   });
 });

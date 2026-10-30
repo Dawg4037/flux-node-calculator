@@ -96,7 +96,7 @@ export function App() {
 
           <div id={`panel-${state.tab}`} role="tabpanel" aria-labelledby={`tab-${state.tab}`}>
             {state.tab === "run" ? (
-              <RunNodeTab update={update} />
+              <RunNodeTab state={state} update={update} market={market} />
             ) : state.tab === "lookup" ? (
               <LookupTab state={state} update={update} price={price.data?.prices[state.currency] ?? null} />
             ) : !market ? (

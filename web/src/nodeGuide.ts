@@ -43,4 +43,8 @@ export const LINKS = {
   sspWallet: "https://sspwallet.io/",
   zelcore: "https://zelcore.io/",
   buyFlux: "https://coinmarketcap.com/currencies/zel/",
+  /** Flux's own walkthrough. */
+  guide2026: "https://runonflux.com/how-to-run-a-fluxnode-2026",
+  /** Community-run marketplace matching collateral holders with operators who have spare hardware. */
+  fluxHub: "https://fluxhub.moltentech.us/",
 } as const;

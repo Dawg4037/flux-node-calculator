@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
-import { COLLATERAL, TIERS, TIER_LABEL } from "../../../shared/rewards.ts";
-import { AFFILIATES, HARDWARE_SEARCHES, affiliatesActive, amazonSearch } from "../affiliates.ts";
-import { currentLocale, fmtInt } from "../format.ts";
+import { useMemo, type ReactNode } from "react";
+import { COLLATERAL, TIERS, TIER_LABEL, project, type Tier } from "../../../shared/rewards.ts";
+import { AFFILIATES, HARDWARE_PICKS, affiliatesActive, pickUrl } from "../affiliates.ts";
+import { currentLocale, fmtInt, fmtMoney } from "../format.ts";
 import { useLang } from "../i18n/index.tsx";
 import { GUIDE_CHECKED, LINKS, TIER_HARDWARE } from "../nodeGuide.ts";
+import { parallelAssetsFor, type Market } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { Section, TierSwatch } from "./ui.tsx";
 
@@ -31,8 +32,49 @@ function Card({ title, tag, children }: { title: string; tag?: string; children:
   );
 }
 
-export function RunNodeTab({ update }: { update: (p: Partial<AppState>) => void }) {
+/** Months used for the hardware budget: what a node earns in this time is what its hardware can cost. */
+const BUDGET_MONTHS = 24;
+
+export function RunNodeTab({
+  state,
+  update,
+  market,
+}: {
+  state: AppState;
+  update: (p: Partial<AppState>) => void;
+  market: Market | null;
+}) {
   const t = useLang().t.run;
+  const c = state.currency;
+
+  // Revenue of one node per tier at today's price and network size, including the yearly cut and
+  // parallel assets (per the visitor's settings) until they end.
+  const budget = useMemo(() => {
+    if (!market || market.price === null) return null;
+    const pa = parallelAssetsFor(state, market);
+    const zero = { cumulus: 0, nimbus: 0, stratus: 0 };
+    return Object.fromEntries(
+      TIERS.map((tier) => {
+        const r = project({
+          startHeight: market.network.height,
+          months: BUDGET_MONTHS,
+          yourNodes: { ...zero, [tier]: 1 },
+          networkNodes: market.network.nodes,
+          networkGrowthPctPerYear: 0,
+          startPrice: market.price ?? 0,
+          priceChangePctPerYear: 0,
+          monthlyCostPerNode: zero,
+          upfrontCost: 0,
+          collateralPrice: 0,
+          includeCollateralInBreakEven: false,
+          parallelAssets: pa,
+        });
+        const total = r.months.reduce((s, m) => s + m.revenue, 0);
+        return [tier, { month: r.months[0]?.revenue ?? 0, total }];
+      }),
+    ) as Record<Tier, { month: number; total: number }>;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [market, state.pa, state.paCount, state.paValue, state.paEnd]);
   const checked = new Date(`${GUIDE_CHECKED}-01T00:00:00Z`).toLocaleDateString(currentLocale(), {
     month: "long",
     year: "numeric",
@@ -121,6 +163,9 @@ export function RunNodeTab({ update }: { update: (p: Partial<AppState>) => void 
       </Section>
 
       <Section title={t.stepsTitle}>
+        <p className="mb-3 text-sm">
+          <Ext href={LINKS.guide2026}>{t.guide2026}</Ext>
+        </p>
         <ol className="max-w-prose list-decimal space-y-3 pl-5 text-sm">
           <li>
             {t.step1} <Ext href={LINKS.buyFlux}>{t.step1Link}</Ext>
@@ -148,31 +193,49 @@ export function RunNodeTab({ update }: { update: (p: Partial<AppState>) => void 
       </Section>
 
       <Section title={t.hwTitle}>
-        <p className="max-w-prose text-sm text-muted">{t.hwIntro}</p>
-        <ul className="mt-3 space-y-2 text-sm">
-          {tiers.map((tier) => (
-            <li key={tier} className="flex items-center gap-2">
-              <TierSwatch tier={tier} />
-              <Ext href={amazonSearch(HARDWARE_SEARCHES[tier])} sponsored={amazon}>
-                {t.hwTier(TIER_LABEL[tier])}
-              </Ext>
-            </li>
-          ))}
-          <li>
-            <Ext href={amazonSearch(HARDWARE_SEARCHES.nvme)} sponsored={amazon}>
-              {t.hwNvme}
-            </Ext>
-          </li>
-          <li>
-            <Ext href={amazonSearch(HARDWARE_SEARCHES.ups)} sponsored={amazon}>
-              {t.hwUps}
-            </Ext>
-          </li>
+        <div className="rounded-md border border-line bg-surface p-4">
+          <p className="text-sm text-muted">{t.budgetIntro}</p>
+          {budget ? (
+            <dl className="mt-3 grid gap-4 sm:grid-cols-3">
+              {tiers.map((tier) => (
+                <div key={tier}>
+                  <dt className="flex items-center gap-2 text-sm text-muted">
+                    <TierSwatch tier={tier} />
+                    {TIER_LABEL[tier]}
+                  </dt>
+                  <dd className="num text-xl font-semibold">{fmtMoney(budget[tier].total, c)}</dd>
+                  <dd className="num text-xs text-muted">{t.budgetMonth(fmtMoney(budget[tier].month, c))}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="mt-2 text-sm">{t.budgetNoPrice}</p>
+          )}
+          <p className="mt-3 text-xs text-muted">{t.budgetNote}</p>
+        </div>
+
+        <p className="mt-5 max-w-prose text-sm">{t.hwIntro}</p>
+        <ul className="mt-3 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
+          {HARDWARE_PICKS.map((pick) => {
+            const tier = pick.id === "cumulus" || pick.id === "nimbus" || pick.id === "stratus" ? pick.id : null;
+            return (
+              <li key={pick.id}>
+                <span className="flex items-center gap-2">
+                  {tier && <TierSwatch tier={tier} />}
+                  <Ext href={pickUrl(pick)} sponsored={amazon}>
+                    {t.picks[pick.id].label}
+                  </Ext>
+                </span>
+                <span className="block text-xs text-muted">{t.picks[pick.id].note}</span>
+              </li>
+            );
+          })}
         </ul>
+        <p className="mt-3 text-xs text-muted">{t.pricesNote}</p>
       </Section>
 
       <Section title={t.noHwTitle}>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           <div className="text-sm">
             <p>{t.titanText}</p>
             <p className="mt-1">
@@ -183,6 +246,12 @@ export function RunNodeTab({ update }: { update: (p: Partial<AppState>) => void 
             <p>{t.managedText}</p>
             <p className="mt-1">
               <Ext href={LINKS.managed}>{t.managedLink}</Ext>
+            </p>
+          </div>
+          <div className="text-sm">
+            <p>{t.fluxHubText}</p>
+            <p className="mt-1">
+              <Ext href={LINKS.fluxHub}>FluxHub</Ext>
             </p>
           </div>
         </div>
