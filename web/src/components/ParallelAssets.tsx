@@ -62,7 +62,7 @@ export function ParallelAssetsSettings({ state, update }: { state: AppState; upd
               className="num mt-1 w-full rounded-md border border-line bg-field px-3 py-2 text-ink outline-none focus:border-nimbus"
             />
             <p className="mt-1 text-xs text-muted">
-              {t.defaults(fmtDay(DEFAULT_PARALLEL_ASSET_END))} <span className="text-loss">{t.earlier}</span>
+              {t.defaults(fmtDay(DEFAULT_PARALLEL_ASSET_END))} <span className="text-loss">{t.claimBy}</span>
               {state.paEnd !== DEFAULT_PARALLEL_ASSET_END && (
                 <>
                   {" "}

@@ -90,15 +90,16 @@ export const id: Messages = {
     note: (count: number, share: string, end: string) => (
       <>
         Termasuk hadiah aset paralel: FLUX yang dibayar di {count} chain lain, masing-masing menambahkan {share} dari setiap
-        pembayaran, hingga {end}. <strong className="font-medium text-ink">Tidak dibayar secara otomatis.</strong> Anda
-        mengklaim masing-masing di Zelcore (Apps → Fusion → Parallel Mining Claim), dan setiap klaim dikenakan biaya jaringan.
+        pembayaran, hingga {end}. <strong className="font-medium text-ink">Tidak dibayar secara otomatis.</strong> Anda mengklaimnya dengan Fusion
+        di SSP Wallet (Nodes → Parallel Assets Reward) atau Zelcore (Apps → Fusion → Parallel Mining Claim). Biaya diambil
+        dari klaim itu sendiri, jadi lebih jarang mengklaim berarti lebih hemat biaya.
       </>
     ),
     warning: (
       <>
-        <strong className="font-medium text-loss">Tanggal berakhir kemungkinan akan lebih awal.</strong> Flux memproyeksikan
-        aset paralel akan habis sekitar tahun 2028, tetapi tidak ada tanggal tetap yang dipublikasikan. Anggap penghasilan
-        setelah satu atau dua tahun ke depan sebagai optimistis.
+        <strong className="font-medium text-loss">Hadiah mining aset paralel berakhir sekitar 1 Juli 2027</strong> (blok 3.787.502), menurut
+        roadmap Flux. Mulai Maret 2027 chain yang dihentikan menjadi satu arah, dan pada Agustus 2027 saldo yang belum
+        diklaim diserahkan ke Flux Foundation, jadi klaimlah sebelum itu.
       </>
     ),
     include: "Sertakan hadiah aset paralel",
@@ -106,8 +107,8 @@ export const id: Messages = {
     active: "Aset aktif",
     value: "Nilai vs. FLUX native",
     endDate: "Perkiraan tanggal berakhir",
-    defaults: (date: string) => `Default ke ${date} dari proyeksi Flux.`,
-    earlier: "Kemungkinan lebih awal.",
+    defaults: (date: string) => `Default ${date}, blok 3.787.502 menurut roadmap Flux.`,
+    claimBy: "Klaim sebelum Agustus 2027.",
     reset: "Atur ulang",
   },
 
@@ -253,7 +254,7 @@ export const id: Messages = {
     nativePerDay: "FLUX native per hari",
     expectedPerDay: "Perkiraan per hari",
     paPerDay: "Aset paralel per hari",
-    claimUntil: "Klaim di Zelcore, hingga berakhir",
+    claimUntil: "Klaim dengan Fusion, hingga berakhir",
     totalPerDay: "Total per hari",
     valuePerDay: "Nilai per hari",
     rate: "Tingkat hadiah tahunan",
@@ -344,9 +345,9 @@ export const id: Messages = {
         <p>
           Setiap aset paralel aktif membayar tambahan {v.paShare} dari setiap pembayaran, dalam FLUX di chain lain. Dengan{" "}
           {v.paCount} aktif, itu {v.paTotal} di atas hadiah native. Mereka dihitung hingga tanggal akhir yang Anda atur
-          (default {v.paEnd}, yang kemungkinan akan lebih awal) dan pada nilai yang Anda atur relatif terhadap FLUX native.
-          Mereka tidak dibayar otomatis: masing-masing diklaim di Zelcore, dan setiap klaim dikenakan biaya jaringan, yang
-          tidak termasuk.
+          (default {v.paEnd}, saat hadiah mining aset paralel berakhir menurut roadmap Flux) dan pada nilai yang Anda atur
+          relatif terhadap FLUX native. Mereka tidak dibayar otomatis: Anda mengklaimnya dengan Fusion di SSP Wallet atau
+          Zelcore, dan biaya Fusion, yang diambil dari klaim, tidak termasuk.
         </p>
 
         <H>Penghasilan, biaya dan break-even</H>

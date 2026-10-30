@@ -215,3 +215,17 @@ describe("address validation", () => {
     expect(FLUX_ADDRESS_RE.test(bad)).toBe(false);
   });
 });
+
+describe("parallel asset end", () => {
+  it("uses the roadmap's exact block for the default date and estimates other dates", async () => {
+    const { parallelAssetEndHeight, DEFAULT_PARALLEL_ASSET_END, DEFAULT_PARALLEL_ASSET_END_HEIGHT } = await import(
+      "../shared/rewards.ts"
+    );
+    const now = Date.parse("2026-10-30T00:00:00Z");
+    expect(parallelAssetEndHeight(DEFAULT_PARALLEL_ASSET_END, 3_075_000, now)).toBe(DEFAULT_PARALLEL_ASSET_END_HEIGHT);
+    // The default date really is about when that block lands (within a few days).
+    const est = parallelAssetEndHeight("2027-07-02", 3_075_000, now);
+    expect(Math.abs(est - DEFAULT_PARALLEL_ASSET_END_HEIGHT)).toBeLessThan(2880 * 7);
+    expect(parallelAssetEndHeight("2027-01-01", 3_075_000, now)).toBeLessThan(DEFAULT_PARALLEL_ASSET_END_HEIGHT);
+  });
+});

@@ -90,15 +90,17 @@ export const es: Messages = {
     note: (count: number, share: string, end: string) => (
       <>
         Incluye las recompensas de activos paralelos: FLUX pagado en {count} cadenas más, cada una con un {share} extra de
-        cada pago, hasta el {end}. <strong className="font-medium text-ink">No se pagan automáticamente.</strong> Cada
-        una se reclama en Zelcore (Apps → Fusion → Parallel Mining Claim), y cada reclamación tiene una comisión de red.
+        cada pago, hasta el {end}. <strong className="font-medium text-ink">No se pagan automáticamente.</strong> Se reclaman con Fusion en SSP
+        Wallet (Nodes → Parallel Assets Reward) o en Zelcore (Apps → Fusion → Parallel Mining Claim). La comisión se
+        descuenta del propio reclamo, así que reclamar con menos frecuencia ahorra comisiones.
       </>
     ),
     warning: (
       <>
-        <strong className="font-medium text-loss">Lo más probable es que la fecha de fin llegue antes.</strong> Flux
-        prevé que los activos paralelos se acaben hacia 2028, pero no se ha publicado una fecha fija. Considera optimistas
-        las ganancias después del próximo año o dos.
+        <strong className="font-medium text-loss">Las recompensas de minería de activos paralelos terminan hacia el 1 de julio de
+        2027</strong> (bloque 3.787.502), según la hoja de ruta de Flux. Desde marzo de 2027 las cadenas que se retiran
+        pasan a ser de un solo sentido, y en agosto de 2027 los saldos sin reclamar pasan a la Flux Foundation, así que
+        reclama antes.
       </>
     ),
     include: "Incluir recompensas de activos paralelos",
@@ -106,8 +108,8 @@ export const es: Messages = {
     active: "Activos vigentes",
     value: "Valor frente al FLUX nativo",
     endDate: "Fecha de fin prevista",
-    defaults: (date: string) => `Por defecto, ${date}, según la previsión de Flux.`,
-    earlier: "Probablemente antes.",
+    defaults: (date: string) => `Por defecto, ${date}: bloque 3.787.502 en la hoja de ruta de Flux.`,
+    claimBy: "Reclama antes de agosto de 2027.",
     reset: "Restablecer",
   },
 
@@ -254,7 +256,7 @@ export const es: Messages = {
     nativePerDay: "FLUX nativo al día",
     expectedPerDay: "Previsto al día",
     paPerDay: "Activos paralelos al día",
-    claimUntil: "Reclámalos en Zelcore, hasta que terminen",
+    claimUntil: "Reclámalos con Fusion, hasta que terminen",
     totalPerDay: "Total al día",
     valuePerDay: "Valor al día",
     rate: "Tasa anual de recompensa",
@@ -346,8 +348,9 @@ export const es: Messages = {
         <p>
           Cada activo paralelo vigente paga un {v.paShare} extra de cada pago, en FLUX en otra cadena. Con {v.paCount}{" "}
           vigentes, es un {v.paTotal} además de las recompensas nativas. Se cuentan hasta la fecha de fin que elijas (por
-          defecto el {v.paEnd}, que probablemente llegará antes) y al valor que elijas respecto al FLUX nativo. No se pagan
-          automáticamente: cada uno se reclama en Zelcore, y cada reclamación tiene una comisión de red que no se incluye.
+          defecto el {v.paEnd}, cuando terminan las recompensas de minería de activos paralelos según la hoja de ruta de
+          Flux) y al valor que elijas respecto al FLUX nativo. No se pagan automáticamente: se reclaman con Fusion en SSP
+          Wallet o Zelcore, y la comisión de Fusion, descontada del reclamo, no se incluye.
         </p>
 
         <H>Ganancias, costes y punto de equilibrio</H>

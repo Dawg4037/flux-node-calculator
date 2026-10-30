@@ -90,15 +90,17 @@ export const pt: Messages = {
     note: (count: number, share: string, end: string) => (
       <>
         Inclui recompensas de ativos paralelos: FLUX pago em {count} outras blockchains, cada uma somando {share} de cada
-        pagamento, até {end}. <strong className="font-medium text-ink">Elas não são pagas automaticamente.</strong> Você
-        resgata cada uma no Zelcore (Apps → Fusion → Parallel Mining Claim), e cada resgate tem uma taxa de rede.
+        pagamento, até {end}. <strong className="font-medium text-ink">Elas não são pagas automaticamente.</strong> Você as resgata pelo Fusion na
+        SSP Wallet (Nodes → Parallel Assets Reward) ou no Zelcore (Apps → Fusion → Parallel Mining Claim). A taxa sai do
+        próprio resgate, então resgatar com menos frequência economiza taxas.
       </>
     ),
     warning: (
       <>
-        <strong className="font-medium text-loss">A data de término provavelmente será antes.</strong> A Flux projeta
-        que os ativos paralelos acabem por volta de 2028, mas nenhuma data fixa foi publicada. Considere otimistas os
-        ganhos depois dos próximos um ou dois anos.
+        <strong className="font-medium text-loss">As recompensas de mineração de ativos paralelos terminam por volta de 1º de julho de
+        2027</strong> (bloco 3.787.502), segundo o roadmap da Flux. A partir de março de 2027 as blockchains que serão
+        desativadas passam a ser de mão única, e em agosto de 2027 os saldos não resgatados vão para a Flux Foundation,
+        então resgate antes disso.
       </>
     ),
     include: "Incluir recompensas de ativos paralelos",
@@ -106,8 +108,8 @@ export const pt: Messages = {
     active: "Ativos em vigor",
     value: "Valor vs. FLUX nativo",
     endDate: "Data de término prevista",
-    defaults: (date: string) => `Padrão: ${date}, pela projeção da Flux.`,
-    earlier: "Provavelmente será antes.",
+    defaults: (date: string) => `Padrão: ${date}, bloco 3.787.502 no roadmap da Flux.`,
+    claimBy: "Resgate antes de agosto de 2027.",
     reset: "Redefinir",
   },
 
@@ -255,7 +257,7 @@ export const pt: Messages = {
     nativePerDay: "FLUX nativo por dia",
     expectedPerDay: "Esperado por dia",
     paPerDay: "Ativos paralelos por dia",
-    claimUntil: "Resgate no Zelcore, até acabarem",
+    claimUntil: "Resgate pelo Fusion, até acabarem",
     totalPerDay: "Total por dia",
     valuePerDay: "Valor por dia",
     rate: "Taxa anual de recompensa",
@@ -348,9 +350,9 @@ export const pt: Messages = {
         <p>
           Cada ativo paralelo em vigor paga {v.paShare} a mais de cada pagamento, em FLUX em outra blockchain. Com{" "}
           {v.paCount} em vigor, são {v.paTotal} além das recompensas nativas. Eles contam até a data de término que você
-          definir (padrão {v.paEnd}, que provavelmente será antes) e pelo valor que você definir em relação ao FLUX nativo.
-          Não são pagos automaticamente: cada um é resgatado no Zelcore, e cada resgate tem uma taxa de rede, que não está
-          incluída.
+          definir (padrão {v.paEnd}, quando as recompensas de mineração de ativos paralelos terminam no roadmap da Flux) e
+          pelo valor que você definir em relação ao FLUX nativo. Não são pagos automaticamente: você os resgata pelo
+          Fusion na SSP Wallet ou no Zelcore, e a taxa do Fusion, descontada do resgate, não está incluída.
         </p>
 
         <H>Ganhos, custos e ponto de equilíbrio</H>

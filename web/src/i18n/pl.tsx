@@ -101,15 +101,16 @@ export const pl: Messages = {
       <>
         Obejmuje nagrody z aktywów równoległych: FLUX wypłacany na {count} innych blockchainach, z których każdy dodaje{" "}
         {share} każdej wypłaty, do {end}.{" "}
-        <strong className="font-medium text-ink">Nie są wypłacane automatycznie.</strong> Każde odbierasz w Zelcore (Apps
-        → Fusion → Parallel Mining Claim), a każde odebranie kosztuje opłatę sieciową.
+        <strong className="font-medium text-ink">Nie są wypłacane automatycznie.</strong> Odbierasz je przez Fusion w SSP Wallet (Nodes → Parallel
+        Assets Reward) lub w Zelcore (Apps → Fusion → Parallel Mining Claim). Opłata jest potrącana z samego odbioru, więc
+        rzadsze odbieranie oszczędza opłaty.
       </>
     ),
     warning: (
       <>
-        <strong className="font-medium text-loss">Data końca najpewniej nastąpi wcześniej.</strong> Flux przewiduje, że
-        aktywa równoległe skończą się około 2028 roku, ale nie opublikowano stałej daty. Zarobki po najbliższym roku lub
-        dwóch traktuj jako optymistyczne.
+        <strong className="font-medium text-loss">Nagrody za kopanie aktywów równoległych kończą się około 1 lipca 2027</strong> (blok
+        3 787 502), zgodnie z planem Flux. Od marca 2027 wycofywane blockchainy działają tylko w jedną stronę, a w sierpniu
+        2027 nieodebrane salda trafiają do Flux Foundation, więc odbierz je wcześniej.
       </>
     ),
     include: "Uwzględnij nagrody z aktywów równoległych",
@@ -117,8 +118,8 @@ export const pl: Messages = {
     active: "Aktywne aktywa",
     value: "Wartość względem natywnego FLUX",
     endDate: "Przewidywana data końca",
-    defaults: (date: string) => `Domyślnie ${date}, według prognozy Flux.`,
-    earlier: "Najpewniej wcześniej.",
+    defaults: (date: string) => `Domyślnie ${date}, blok 3 787 502 według planu Flux.`,
+    claimBy: "Odbierz przed sierpniem 2027.",
     reset: "Przywróć",
   },
 
@@ -265,7 +266,7 @@ export const pl: Messages = {
     nativePerDay: "Natywny FLUX dziennie",
     expectedPerDay: "Oczekiwane dziennie",
     paPerDay: "Aktywa równoległe dziennie",
-    claimUntil: "Odbieraj w Zelcore, dopóki trwają",
+    claimUntil: "Odbieraj przez Fusion, dopóki trwają",
     totalPerDay: "Łącznie dziennie",
     valuePerDay: "Wartość dziennie",
     rate: "Roczna stopa nagród",
@@ -356,10 +357,10 @@ export const pl: Messages = {
         <H>Aktywa równoległe</H>
         <p>
           Każde aktywne aktywo równoległe wypłaca dodatkowo {v.paShare} każdej wypłaty, w FLUX na innym blockchainie. Przy{" "}
-          {v.paCount} aktywnych daje to {v.paTotal} ponad nagrody natywne. Są liczone do ustawionej przez
-          Ciebie daty końca (domyślnie {v.paEnd}, najpewniej nastąpi wcześniej) i według ustawionej wartości względem
-          natywnego FLUX. Nie są wypłacane automatycznie: każde odbiera się w Zelcore, a każde odebranie kosztuje opłatę
-          sieciową, która nie jest uwzględniona.
+          {v.paCount} aktywnych daje to {v.paTotal} ponad nagrody natywne. Są liczone do ustawionej przez Ciebie daty
+          końca (domyślnie {v.paEnd}, kiedy według planu Flux kończą się nagrody za kopanie aktywów równoległych) i według
+          ustawionej wartości względem natywnego FLUX. Nie są wypłacane automatycznie: odbiera się je przez Fusion w SSP
+          Wallet lub Zelcore, a opłata Fusion, potrącana z odbioru, nie jest uwzględniona.
         </p>
 
         <H>Zarobki, koszty i próg rentowności</H>

@@ -102,9 +102,9 @@ export function dailyFluxPerNode(tier: Tier, height: number, enabledInTier: numb
 
 /**
  * Parallel assets: FLUX tokens on other chains (10 active by default). Each active asset pays an extra 10% of every
- * node payout, on its own chain. Rewards accrue until claimed manually (Zelcore → Fusion →
- * Parallel Mining Claim), and each claim costs a network fee. Flux's PoUW v2 paper projects them
- * mined out by about 2028.
+ * node payout, on its own chain. Rewards accrue until claimed with Fusion (SSP Wallet or Zelcore);
+ * the Fusion fee is taken from the claim. Per Flux's roadmap, PA mining rewards end at block
+ * 3,787,502 (about 1 July 2027) and unclaimed balances go to the Foundation in August 2027.
  */
 export interface ParallelAssets {
   /** Number of active parallel assets. */
@@ -117,8 +117,10 @@ export interface ParallelAssets {
 
 export const PARALLEL_ASSET_SHARE = 0.1;
 export const DEFAULT_PARALLEL_ASSET_COUNT = 10;
-/** Projected end used by default (start of 2028, per the PoUW v2 paper). Likely to come earlier. */
-export const DEFAULT_PARALLEL_ASSET_END = "2028-01-01";
+/** Block at which PA mining rewards end, per Flux's roadmap (FAQ, Oct 2026). */
+export const DEFAULT_PARALLEL_ASSET_END_HEIGHT = 3_787_502;
+/** Calendar day of that block, used for the date field (about 1 July 2027). */
+export const DEFAULT_PARALLEL_ASSET_END = "2027-07-01";
 
 /** FLUX-equivalent parallel-asset reward per 1 FLUX of native reward, while they are active. */
 export function parallelAssetMultiplier(pa: ParallelAssets | undefined): number {
@@ -130,6 +132,12 @@ export function parallelAssetMultiplier(pa: ParallelAssets | undefined): number 
 /** Converts a calendar date to an estimated block height, from a known height at a known time. */
 export function heightAtTime(targetMs: number, knownHeight: number, knownAtMs: number): number {
   return Math.round(knownHeight + (targetMs - knownAtMs) / (BLOCK_TIME_SECONDS * 1000));
+}
+
+/** End height for a parallel-asset end date: the roadmap's exact block for the default date. */
+export function parallelAssetEndHeight(isoDay: string, knownHeight: number, knownAtMs: number): number {
+  if (isoDay === DEFAULT_PARALLEL_ASSET_END) return DEFAULT_PARALLEL_ASSET_END_HEIGHT;
+  return heightAtTime(Date.parse(`${isoDay}T00:00:00Z`), knownHeight, knownAtMs);
 }
 
 // ---------------------------------------------------------------------------

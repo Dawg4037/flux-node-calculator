@@ -1,6 +1,6 @@
 /** Glue between app state, live data and the shared reward math. */
 import type { NetworkResponse } from "../../shared/api.ts";
-import { heightAtTime, project, type ParallelAssets, type ProjectionResult } from "../../shared/rewards.ts";
+import { parallelAssetEndHeight, project, type ParallelAssets, type ProjectionResult } from "../../shared/rewards.ts";
 import type { AppState, Setup } from "./state.ts";
 
 export interface Market {
@@ -34,11 +34,10 @@ export function runProjection(
 /** Parallel-asset settings for the shared math, or undefined when they're switched off. */
 export function parallelAssetsFor(state: AppState, market: Market): ParallelAssets | undefined {
   if (!state.pa) return undefined;
-  const endMs = Date.parse(`${state.paEnd}T00:00:00Z`);
   return {
     count: state.paCount,
     valuePct: state.paValue,
-    endHeight: heightAtTime(endMs, market.network.height, new Date(market.network.updatedAt).getTime()),
+    endHeight: parallelAssetEndHeight(state.paEnd, market.network.height, new Date(market.network.updatedAt).getTime()),
   };
 }
 

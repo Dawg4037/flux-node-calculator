@@ -92,15 +92,15 @@ export const de: Messages = {
       <>
         Enthält Belohnungen aus Parallel Assets: FLUX auf {count} weiteren Chains, die jeweils {share} jeder Auszahlung
         hinzufügen, bis zum {end}. <strong className="font-medium text-ink">Sie werden nicht automatisch ausgezahlt.</strong>{" "}
-        Du beanspruchst jedes einzeln in Zelcore (Apps → Fusion → Parallel Mining Claim), und jeder Claim kostet eine
-        Netzwerkgebühr.
+        Du beanspruchst sie mit Fusion in der SSP Wallet (Nodes → Parallel Assets Reward) oder in Zelcore (Apps → Fusion →
+        Parallel Mining Claim). Die Gebühr wird vom Claim selbst abgezogen, seltener zu beanspruchen spart also Gebühren.
       </>
     ),
     warning: (
       <>
-        <strong className="font-medium text-loss">Das Enddatum kommt wahrscheinlich früher.</strong> Flux rechnet damit,
-        dass die Parallel Assets um 2028 auslaufen, aber ein festes Datum wurde nicht veröffentlicht. Betrachte Erträge
-        nach den nächsten ein bis zwei Jahren als optimistisch.
+        <strong className="font-medium text-loss">Die Mining-Belohnungen für Parallel Assets enden laut Flux-Roadmap um den 1. Juli
+        2027</strong> (Block 3.787.502). Ab März 2027 werden die auslaufenden Chains zur Einbahnstraße, und im August 2027
+        gehen nicht beanspruchte Guthaben an die Flux Foundation – beanspruche sie also vorher.
       </>
     ),
     include: "Belohnungen aus Parallel Assets einbeziehen",
@@ -108,8 +108,8 @@ export const de: Messages = {
     active: "Aktive Assets",
     value: "Wert ggü. nativem FLUX",
     endDate: "Erwartetes Enddatum",
-    defaults: (date: string) => `Standard ist der ${date}, laut Prognose von Flux.`,
-    earlier: "Wahrscheinlich früher.",
+    defaults: (date: string) => `Standard ist der ${date}, Block 3.787.502 laut Flux-Roadmap.`,
+    claimBy: "Vor August 2027 beanspruchen.",
     reset: "Zurücksetzen",
   },
 
@@ -258,7 +258,7 @@ export const de: Messages = {
     nativePerDay: "Natives FLUX pro Tag",
     expectedPerDay: "Erwartet pro Tag",
     paPerDay: "Parallel Assets pro Tag",
-    claimUntil: "In Zelcore beanspruchen, bis sie enden",
+    claimUntil: "Mit Fusion beanspruchen, bis sie enden",
     totalPerDay: "Gesamt pro Tag",
     valuePerDay: "Wert pro Tag",
     rate: "Jährliche Ertragsrate",
@@ -352,9 +352,10 @@ export const de: Messages = {
         <p>
           Jedes aktive Parallel Asset zahlt zusätzlich {v.paShare} jeder Auszahlung, in FLUX auf einer anderen Chain. Bei{" "}
           {v.paCount} aktiven sind das {v.paTotal} zusätzlich zu den nativen Belohnungen. Sie zählen bis zu dem Enddatum,
-          das du festlegst (Standard: {v.paEnd}, wahrscheinlich früher), und mit dem Wert, den du im Verhältnis zu nativem
-          FLUX festlegst. Sie werden nicht automatisch ausgezahlt: Jedes wird in Zelcore beansprucht, und jeder Claim kostet
-          eine Netzwerkgebühr, die nicht enthalten ist.
+          das du festlegst (Standard: {v.paEnd}, wenn laut Flux-Roadmap die Mining-Belohnungen für Parallel Assets enden),
+          und mit dem Wert, den du im Verhältnis zu nativem FLUX festlegst. Sie werden nicht automatisch ausgezahlt: Du
+          beanspruchst sie mit Fusion in der SSP Wallet oder in Zelcore, und die Fusion-Gebühr, die vom Claim abgezogen
+          wird, ist nicht enthalten.
         </p>
 
         <H>Erträge, Kosten und Gewinnschwelle</H>

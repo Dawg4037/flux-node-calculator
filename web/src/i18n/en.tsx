@@ -89,15 +89,16 @@ export const en = {
     note: (count: number, share: string, end: string) => (
       <>
         Includes parallel asset rewards: FLUX paid on {count} other chains, each adding {share} of every payout, until{" "}
-        {end}. <strong className="font-medium text-ink">They aren't paid automatically.</strong> You claim each one in
-        Zelcore (Apps → Fusion → Parallel Mining Claim), and every claim costs a network fee.
+        {end}. <strong className="font-medium text-ink">They aren't paid automatically.</strong> You claim them with Fusion in SSP Wallet (Nodes →
+        Parallel Assets Reward) or Zelcore (Apps → Fusion → Parallel Mining Claim). The fee comes out of the claim, so
+        claiming less often saves fees.
       </>
     ),
     warning: (
       <>
-        <strong className="font-medium text-loss">The end date will likely come earlier.</strong> Flux projects parallel
-        assets running out around 2028, but no fixed date has been published. Treat earnings after the next year or two as
-        optimistic.
+        <strong className="font-medium text-loss">PA mining rewards end around 1 July 2027</strong> (block 3,787,502), per Flux's roadmap. From
+        March 2027 the retiring chains become one-way, and in August 2027 unclaimed balances go to the Flux Foundation, so
+        claim before then.
       </>
     ),
     include: "Include parallel asset rewards",
@@ -105,8 +106,8 @@ export const en = {
     active: "Active assets",
     value: "Value vs. native FLUX",
     endDate: "Projected end date",
-    defaults: (date: string) => `Defaults to ${date} from Flux's projection.`,
-    earlier: "Likely to be earlier.",
+    defaults: (date: string) => `Defaults to ${date}, block 3,787,502 on Flux's roadmap.`,
+    claimBy: "Claim before August 2027.",
     reset: "Reset",
   },
 
@@ -252,7 +253,7 @@ export const en = {
     nativePerDay: "Native FLUX per day",
     expectedPerDay: "Expected per day",
     paPerDay: "Parallel assets per day",
-    claimUntil: "Claim in Zelcore, until they end",
+    claimUntil: "Claim with Fusion, until they end",
     totalPerDay: "Total per day",
     valuePerDay: "Value per day",
     rate: "Yearly reward rate",
@@ -343,8 +344,9 @@ export const en = {
         <p>
           Each active parallel asset pays an extra {v.paShare} of every payout, in FLUX on another chain. With{" "}
           {v.paCount} active, that's {v.paTotal} on top of native rewards. They're counted until the end date you set
-          (default {v.paEnd}, which will likely come earlier) and at the value you set relative to native FLUX. They aren't
-          paid automatically: each one is claimed in Zelcore, and each claim costs a network fee, which isn't included.
+          (default {v.paEnd}, when PA mining rewards end on Flux's roadmap) and at the value you set relative to native
+          FLUX. They aren't paid automatically: you claim them with Fusion in SSP Wallet or Zelcore, and the Fusion fee,
+          taken from the claim, isn't included.
         </p>
 
         <H>Earnings, costs and break-even</H>

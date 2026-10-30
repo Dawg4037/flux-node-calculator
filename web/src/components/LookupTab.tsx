@@ -4,7 +4,7 @@ import {
   FLUX_ADDRESS_RE,
   TIERS,
   TIER_LABEL,
-  heightAtTime,
+  parallelAssetEndHeight,
   parallelAssetMultiplier,
   yearRewardPerNode,
   type ParallelAssets,
@@ -96,7 +96,7 @@ export function LookupTab({ state, update, price }: Props) {
       ? {
           count: state.paCount,
           valuePct: state.paValue,
-          endHeight: heightAtTime(Date.parse(`${state.paEnd}T00:00:00Z`), result.height, Date.parse(result.updatedAt)),
+          endHeight: parallelAssetEndHeight(state.paEnd, result.height, Date.parse(result.updatedAt)),
         }
       : undefined;
   // Next 12 months for all of this address's nodes, at today's network size.
