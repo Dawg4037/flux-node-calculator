@@ -81,8 +81,9 @@ interface LangContextValue {
 
 const LangContext = createContext<LangContextValue>({ lang: "en", t: en, setLang: () => {} });
 
-export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(initialLang);
+/** `initial` fixes the language when the page is prerendered at build time. */
+export function LangProvider({ children, initial }: { children: ReactNode; initial?: Lang }) {
+  const [lang, setLangState] = useState<Lang>(() => initial ?? initialLang());
   // Only an explicit choice is remembered, so a detected language keeps following the browser.
   const setLang = (l: Lang) => {
     try {

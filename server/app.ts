@@ -1,7 +1,7 @@
 /** Builds the Fastify app. Separate from index.ts so tests can inject mocks. */
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
@@ -150,8 +150,11 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
   if (hasStatic) {
     await app.register(fastifyStatic, {
       root: staticRoot,
-      index: ["index.html"],
+      // "/" is answered below so the page can come in the visitor's language.
+      index: false,
       wildcard: false,
+      // Serves the .br / .gz copies made at build time. Nothing is compressed per request.
+      preCompressed: true,
       setHeaders: (reply, filePath) => {
         if (filePath.includes(`${path.sep}assets${path.sep}`)) {
           reply.header("cache-control", "public, max-age=31536000, immutable");
@@ -162,11 +165,26 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
     });
   }
 
+  // Prerendered pages: index.html (English) and index.<lang>.html for the other languages.
+  const pageLangs = new Set(
+    hasStatic
+      ? readdirSync(staticRoot).flatMap((f) => /^index\.([a-z]{2})\.html$/.exec(f)?.[1] ?? [])
+      : [],
+  );
+  const sendPage = (req: FastifyRequest, reply: FastifyReply) => {
+    const lang = pickLanguage(req.headers["accept-language"], pageLangs);
+    return reply
+      .header("cache-control", "no-cache")
+      .header("vary", "Accept-Language")
+      .sendFile(lang ? `index.${lang}.html` : "index.html");
+  };
+  if (hasStatic) app.get("/", sendPage);
+
   app.setNotFoundHandler((req, reply) => {
     if (req.url.startsWith("/api/") || req.method !== "GET" || !hasStatic) {
       return reply.code(404).send({ error: "Not found" });
     }
-    return reply.header("cache-control", "no-cache").sendFile("index.html");
+    return sendPage(req, reply);
   });
 
   app.setErrorHandler((err: { statusCode?: number; validation?: unknown; message?: string }, req, reply) => {
@@ -200,4 +218,27 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
   });
 
   return { app, flux, price };
+}
+
+/**
+ * First language in the Accept-Language header (by q value) that has a prerendered page,
+ * or null for the English default.
+ */
+export function pickLanguage(header: string | undefined, available: ReadonlySet<string>): string | null {
+  if (!header) return null;
+  const ranked = header
+    .slice(0, 512)
+    .split(",")
+    .map((part, i) => {
+      const [tag = "", ...params] = part.trim().split(";");
+      const q = Number(params.find((p) => p.trim().startsWith("q="))?.trim().slice(2) ?? 1);
+      return { base: tag.toLowerCase().split("-")[0]!, q: Number.isFinite(q) ? q : 0, i };
+    })
+    .filter((x) => x.q > 0)
+    .sort((a, b) => b.q - a.q || a.i - b.i);
+  for (const { base } of ranked) {
+    if (base === "en") return null;
+    if (available.has(base)) return base;
+  }
+  return null;
 }

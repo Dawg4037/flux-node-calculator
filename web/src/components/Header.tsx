@@ -151,11 +151,11 @@ export function Header({ network, price, currency, onCurrency, theme, onTheme }:
           <p className="mt-3 max-w-prose text-muted">
             {h.intro}
           </p>
-          {network && (
-            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          {/* Always rendered so the layout doesn't shift when data arrives. */}
+          <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div>
                 <dt className="text-muted">{h.blockHeight}</dt>
-                <dd className="num text-lg font-medium">{fmtInt(network.height)}</dd>
+                <dd className="num text-lg font-medium">{network ? fmtInt(network.height) : "—"}</dd>
               </div>
               <div>
                 <dt className="text-muted">{h.fluxPrice}</dt>
@@ -165,14 +165,13 @@ export function Header({ network, price, currency, onCurrency, theme, onTheme }:
               </div>
               <div>
                 <dt className="text-muted">{h.nextCut}</dt>
-                <dd className="num text-lg font-medium">{fmtDuration(etaMs)}</dd>
+                <dd className="num text-lg font-medium">{network ? fmtDuration(etaMs) : "—"}</dd>
               </div>
               <div>
                 <dt className="text-muted">{h.atBlock}</dt>
-                <dd className="num text-lg font-medium">{fmtInt(network.nextReductionHeight)}</dd>
+                <dd className="num text-lg font-medium">{network ? fmtInt(network.nextReductionHeight) : "—"}</dd>
               </div>
             </dl>
-          )}
           {(network?.stale || price?.stale) && (
             <p className="mt-3 text-xs text-muted">
               {h.stale(fmtDate(network?.stale ? network.updatedAt : (price?.updatedAt ?? null)))}
@@ -183,7 +182,7 @@ export function Header({ network, price, currency, onCurrency, theme, onTheme }:
           {network ? (
             <RewardStaircase height={network.height} />
           ) : (
-            <div className="h-36 animate-pulse rounded-md bg-line/40" aria-hidden />
+            <div className="aspect-[4/1] w-full animate-pulse rounded-md bg-line/40" aria-hidden />
           )}
           <figcaption className="mt-2 text-sm text-muted">
             {h.caption}

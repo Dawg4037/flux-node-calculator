@@ -71,7 +71,7 @@ export function App() {
           <Notice tone="error">{t.app.priceError}</Notice>
         )}
 
-        {network.data && <NetworkTable network={network.data} state={state} />}
+        <NetworkTable network={network.data} state={state} />
 
         <section className="border-t border-line pt-6">
           <div role="tablist" aria-label={t.app.tablist} className="mb-8 flex gap-1 overflow-x-auto border-b border-line">

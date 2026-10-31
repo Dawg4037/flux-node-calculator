@@ -16,10 +16,10 @@ import type { AppState } from "../state.ts";
 import { HowItWorksButton } from "./HowItWorks.tsx";
 import { Section, TierSwatch } from "./ui.tsx";
 
-export function NetworkTable({ network, state }: { network: NetworkResponse; state: AppState }) {
+export function NetworkTable({ network, state }: { network: NetworkResponse | null; state: AppState }) {
   const t = useT().network;
   const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
-  const pa = paMult > 0 ? parallelAssetsFor(state, { network, price: 0 }) : undefined;
+  const pa = paMult > 0 && network ? parallelAssetsFor(state, { network, price: 0 }) : undefined;
   return (
     <Section
       title={t.title}
@@ -46,7 +46,7 @@ export function NetworkTable({ network, state }: { network: NetworkResponse; sta
           <tbody className="num">
             {TIERS.slice()
               .reverse()
-              .map((tier) => (
+              .map((tier) => network ? (
                 <tr key={tier} className="border-b border-line/60">
                   <td className="py-2.5 pr-4">
                     <span className="flex items-center gap-2 font-medium">
@@ -80,6 +80,23 @@ export function NetworkTable({ network, state }: { network: NetworkResponse; sta
                       fmtPct(fluxAprPct(tier, network.height, network.nodes[tier]))
                     )}
                   </td>
+                </tr>
+              ) : (
+                // Placeholder row with the same height, so the page doesn't shift when data arrives.
+                <tr key={tier} className="border-b border-line/60">
+                  <td className="py-2.5 pr-4">
+                    <span className="flex items-center gap-2 font-medium">
+                      <TierSwatch tier={tier} />
+                      {TIER_LABEL[tier]}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-4 text-right">{fmtInt(COLLATERAL[tier])} FLUX</td>
+                  {Array.from({ length: paMult > 0 ? 6 : 5 }, (_, i) => (
+                    <td key={i} className={`py-2.5 text-right text-muted ${i < (paMult > 0 ? 5 : 4) ? "pr-4" : ""}`}>
+                      —
+                      {paMult > 0 && i === 5 && <span className="invisible block text-xs">—</span>}
+                    </td>
+                  ))}
                 </tr>
               ))}
           </tbody>

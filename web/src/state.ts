@@ -198,7 +198,10 @@ export function serializeState(s: AppState): string {
 }
 
 export function useAppState() {
-  const [state, setState] = useState<AppState>(() => parseState(window.location.search));
+  const [state, setState] = useState<AppState>(() =>
+    // At build time (page prerender) there is no window: start from the defaults.
+    parseState(typeof window === "undefined" ? "" : window.location.search),
+  );
 
   useEffect(() => {
     const qs = serializeState(state);
