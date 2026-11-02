@@ -1,4 +1,5 @@
-import { TIERS, TIER_LABEL, titanAprPct, titanSiteApyPct } from "../../../shared/rewards.ts";
+import type { ReactNode } from "react";
+import { COLLATERAL, TIERS, TIER_LABEL, titanAprPct, titanSiteApyPct, type ProjectionResult } from "../../../shared/rewards.ts";
 import type { Currency } from "../../../shared/api.ts";
 import { fmtFlux, fmtInt, fmtMoney, fmtMonths, fmtPct } from "../format.ts";
 import { useT } from "../i18n/index.tsx";
@@ -69,6 +70,136 @@ function TitanInputs({ setup, onChange, market }: { setup: Setup; onChange: (s: 
         </div>
       )}
     </fieldset>
+  );
+}
+
+interface BreakdownRow {
+  key: string;
+  label: ReactNode;
+  locked: number;
+  native: number;
+  pa: number;
+  revenue: number;
+  cost: number;
+  rate: number;
+}
+
+/** One line per node tier and for Titan, adding up to the totals above. */
+function Breakdown({
+  state,
+  setup,
+  market,
+  flat,
+  showPa,
+}: {
+  state: AppState;
+  setup: Setup;
+  market: Market;
+  flat: ProjectionResult;
+  showPa: boolean;
+}) {
+  const all = useT();
+  const t = all.earnings.breakdown;
+  const c = state.currency;
+  const priced = market.price !== null;
+  const money = (v: number) => (priced ? fmtMoney(v, c) : "—");
+  const paValue = state.pa ? state.paValue / 100 : 0;
+  const year = flat.months.slice(0, 12);
+  const m1 = flat.months[0]!;
+  const nodeFlux = (m: (typeof year)[number]) => m.flux.cumulus + m.flux.nimbus + m.flux.stratus;
+  // A tier's share of the month's parallel assets is its share of the month's node rewards.
+  const paShare = (m: (typeof year)[number], v: number) => (nodeFlux(m) > 0 ? (m.paFlux * v) / nodeFlux(m) : 0);
+
+  const rows: BreakdownRow[] = [];
+  for (const tier of TIERS.slice().reverse()) {
+    const n = setup.nodes[tier];
+    if (!(n > 0)) continue;
+    const native = m1.flux[tier];
+    const pa = paShare(m1, native);
+    const yearFlux = year.reduce((sum, m) => sum + m.flux[tier] + paShare(m, m.flux[tier]) * paValue, 0);
+    rows.push({
+      key: tier,
+      label: (
+        <span className="flex items-center gap-2">
+          <TierSwatch tier={tier} />
+          {TIER_LABEL[tier]} × {fmtInt(n)}
+        </span>
+      ),
+      locked: n * COLLATERAL[tier],
+      native,
+      pa,
+      revenue: (native + pa * paValue) * m1.price,
+      cost: n * Math.max(0, setup.cost[tier] || 0),
+      rate: (yearFlux / (n * COLLATERAL[tier])) * 100,
+    });
+  }
+  if (setup.titan > 0) {
+    const lockup = titanLockupFor(setup, market.titan);
+    rows.push({
+      key: "titan",
+      label: lockup ? `Titan · ${all.earnings.titan.lockOption(lockup.months, lockup.feePct)}` : "Titan",
+      locked: setup.titan,
+      native: m1.titanFlux,
+      pa: 0,
+      revenue: m1.titanFlux * m1.price,
+      cost: 0,
+      rate: (year.reduce((sum, m) => sum + m.titanFlux, 0) / setup.titan) * 100,
+    });
+  }
+  // A single line would only repeat the totals.
+  if (rows.length < 2) return null;
+
+  const yearAll = year.reduce((sum, m) => sum + m.fluxTotal + m.paFlux * paValue, 0);
+  const total: BreakdownRow = {
+    key: "total",
+    label: t.total,
+    locked: flat.collateralFlux,
+    native: m1.fluxTotal,
+    pa: m1.paFlux,
+    revenue: m1.revenue,
+    cost: m1.cost,
+    rate: flat.collateralFlux > 0 ? (yearAll / flat.collateralFlux) * 100 : 0,
+  };
+
+  const cells = (r: BreakdownRow, bold = false) => (
+    <tr key={r.key} className={bold ? "font-semibold" : "border-b border-line/60"}>
+      <td className="py-2 pr-4 whitespace-nowrap">{r.label}</td>
+      <td className="py-2 pr-4 text-right">{fmtInt(r.locked)}</td>
+      <td className="py-2 pr-4 text-right">{fmtFlux(r.native)}</td>
+      {showPa && <td className="py-2 pr-4 text-right">{r.key === "titan" ? "—" : fmtFlux(r.pa)}</td>}
+      <td className="py-2 pr-4 text-right">{money(r.revenue)}</td>
+      <td className="py-2 pr-4 text-right">{money(r.cost)}</td>
+      <td className={`py-2 pr-4 text-right ${!priced ? "" : r.revenue - r.cost >= 0 ? "text-gain" : "text-loss"}`}>
+        {money(r.revenue - r.cost)}
+      </td>
+      <td className="py-2 text-right">{fmtPct(r.rate)}</td>
+    </tr>
+  );
+
+  return (
+    <div className="mt-6">
+      <h4 className="mb-2 text-sm font-medium text-muted">{t.title}</h4>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-left text-sm">
+          <thead className="text-muted">
+            <tr className="border-b border-line">
+              <th className="py-2 pr-4 font-normal" />
+              <th className="py-2 pr-4 text-right font-normal">{t.locked}</th>
+              <th className="py-2 pr-4 text-right font-normal">{t.native}</th>
+              {showPa && <th className="py-2 pr-4 text-right font-normal">{t.pa}</th>}
+              <th className="py-2 pr-4 text-right font-normal">{t.revenue}</th>
+              <th className="py-2 pr-4 text-right font-normal">{t.cost}</th>
+              <th className="py-2 pr-4 text-right font-normal">{t.net}</th>
+              <th className="py-2 text-right font-normal">{t.rate}</th>
+            </tr>
+          </thead>
+          <tbody className="num">
+            {rows.map((r) => cells(r))}
+            {cells(total, true)}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -203,6 +334,8 @@ function Results({
           <dd className={`num text-xl ${!priced ? "" : year1Net >= 0 ? "text-gain" : "text-loss"}`}>{money(year1Net)}</dd>
         </div>
       </dl>
+
+      <Breakdown state={state} setup={setup} market={market} flat={flat} showPa={showPa} />
 
       {!priced ? (
         <div className="mt-6 rounded-md border border-line bg-surface p-4">

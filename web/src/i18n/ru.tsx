@@ -155,6 +155,17 @@ export const ru: Messages = {
     net: "Чистыми в месяц",
     collateralLocked: "Залог заблокирован",
     lockedWithTitan: "Залог и стейк в Titan заблокированы",
+    breakdown: {
+      title: "Разбивка",
+      locked: "Заблокировано",
+      native: "Нативный FLUX / мес.",
+      pa: "Параллельные активы / мес.",
+      revenue: "Выручка / мес.",
+      cost: "Расходы / мес.",
+      net: "Чистыми / мес.",
+      rate: "Годовая ставка",
+      total: "Итого",
+    },
     titan: {
       title: "Стейк в Titan",
       intro: "Общие ноды Flux: стейкинг от 50 FLUX без собственной ноды.",

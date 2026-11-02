@@ -139,6 +139,17 @@ export const en = {
     net: "Net per month",
     collateralLocked: "Collateral locked",
     lockedWithTitan: "Collateral and Titan stake locked",
+    breakdown: {
+      title: "Breakdown",
+      locked: "Locked",
+      native: "Native FLUX / mo",
+      pa: "Parallel assets / mo",
+      revenue: "Revenue / mo",
+      cost: "Costs / mo",
+      net: "Net / mo",
+      rate: "Yearly rate",
+      total: "Total",
+    },
     titan: {
       title: "Titan stake",
       intro: "Flux's shared nodes: stake from 50 FLUX without running a node of your own.",

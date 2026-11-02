@@ -140,6 +140,17 @@ export const id: Messages = {
     net: "Bersih per bulan",
     collateralLocked: "Jaminan terkunci",
     lockedWithTitan: "Jaminan dan stake Titan terkunci",
+    breakdown: {
+      title: "Rincian",
+      locked: "Terkunci",
+      native: "FLUX native / bln",
+      pa: "Aset paralel / bln",
+      revenue: "Pendapatan / bln",
+      cost: "Biaya / bln",
+      net: "Bersih / bln",
+      rate: "Tarif tahunan",
+      total: "Total",
+    },
     titan: {
       title: "Stake Titan",
       intro: "Node bersama milik Flux: stake mulai 50 FLUX tanpa menjalankan node sendiri.",

@@ -142,6 +142,17 @@ export const fr: Messages = {
     net: "Net par mois",
     collateralLocked: "Collatéral bloqué",
     lockedWithTitan: "Collatéral et stake Titan bloqués",
+    breakdown: {
+      title: "Détail",
+      locked: "Bloqué",
+      native: "FLUX natif / mois",
+      pa: "Actifs parallèles / mois",
+      revenue: "Revenus / mois",
+      cost: "Coûts / mois",
+      net: "Net / mois",
+      rate: "Taux annuel",
+      total: "Total",
+    },
     titan: {
       title: "Stake Titan",
       intro: "Les nœuds partagés de Flux : stakez dès 50 FLUX sans faire tourner votre propre nœud.",

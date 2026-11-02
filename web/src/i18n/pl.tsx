@@ -151,6 +151,17 @@ export const pl: Messages = {
     net: "Netto miesięcznie",
     collateralLocked: "Zablokowane zabezpieczenie",
     lockedWithTitan: "Zablokowane zabezpieczenie i stake w Titanie",
+    breakdown: {
+      title: "Szczegóły",
+      locked: "Zablokowane",
+      native: "Natywny FLUX / mies.",
+      pa: "Aktywa równoległe / mies.",
+      revenue: "Przychód / mies.",
+      cost: "Koszty / mies.",
+      net: "Netto / mies.",
+      rate: "Roczna stopa",
+      total: "Razem",
+    },
     titan: {
       title: "Stake w Titanie",
       intro: "Współdzielone węzły Flux: stakuj od 50 FLUX bez prowadzenia własnego węzła.",

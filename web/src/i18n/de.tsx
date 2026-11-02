@@ -142,6 +142,17 @@ export const de: Messages = {
     net: "Netto pro Monat",
     collateralLocked: "Gebundenes Collateral",
     lockedWithTitan: "Gebundenes Collateral und Titan-Stake",
+    breakdown: {
+      title: "Aufschlüsselung",
+      locked: "Gebunden",
+      native: "Natives FLUX / Monat",
+      pa: "Parallel Assets / Monat",
+      revenue: "Umsatz / Monat",
+      cost: "Kosten / Monat",
+      net: "Netto / Monat",
+      rate: "Jahresrate",
+      total: "Gesamt",
+    },
     titan: {
       title: "Titan-Stake",
       intro: "Geteilte Nodes von Flux: Stake ab 50 FLUX, ohne selbst einen Node zu betreiben.",
