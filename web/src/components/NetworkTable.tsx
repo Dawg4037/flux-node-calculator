@@ -19,7 +19,7 @@ import { Section, TierSwatch } from "./ui.tsx";
 export function NetworkTable({ network, state }: { network: NetworkResponse | null; state: AppState }) {
   const t = useT().network;
   const paMult = paActiveNow(state) ? parallelAssetMultiplier({ count: state.paCount, valuePct: 100, endHeight: 0 }) : 0;
-  const pa = paMult > 0 && network ? parallelAssetsFor(state, { network, price: 0 }) : undefined;
+  const pa = paMult > 0 && network ? parallelAssetsFor(state, { network, price: 0, titan: null }) : undefined;
   return (
     <Section
       title={t.title}

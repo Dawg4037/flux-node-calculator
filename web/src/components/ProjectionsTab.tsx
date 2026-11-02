@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { BLOCKS_PER_MONTH, REDUCTION_INTERVAL } from "../../../shared/rewards.ts";
 import { fmtFlux, fmtMoney, fmtMoneyShort, fmtMonths, fmtPrice } from "../format.ts";
 import { useT } from "../i18n/index.tsx";
-import { hasNodes, runProjection, type Market } from "../model.ts";
+import { hasHoldings, runProjection, type Market } from "../model.ts";
 import type { AppState } from "../state.ts";
 import { LineChart } from "./LineChart.tsx";
 import { ParallelAssetsNote, ParallelAssetsSettings } from "./ParallelAssets.tsx";
@@ -32,7 +32,7 @@ export function ProjectionsTab({ state, update, market }: Props) {
   const price = market.price;
   if (price === null) return <Notice>{all.app.priceNeeded}</Notice>;
 
-  if (!hasNodes(state.a)) {
+  if (!hasHoldings(state.a)) {
     return <Notice>{t.needNodes}</Notice>;
   }
 

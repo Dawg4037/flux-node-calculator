@@ -1,5 +1,5 @@
 import { useMemo, type KeyboardEvent } from "react";
-import { useNetwork, usePrice } from "./api.ts";
+import { useNetwork, usePrice, useTitan } from "./api.ts";
 import { EarningsTab } from "./components/EarningsTab.tsx";
 import { Header } from "./components/Header.tsx";
 import { LookupTab } from "./components/LookupTab.tsx";
@@ -26,12 +26,15 @@ export function App() {
   const { lang, t } = useLang();
   const network = useNetwork();
   const price = usePrice();
+  const titan = useTitan();
 
   const market: Market | null = useMemo(
     () =>
       // The calculator runs on network data alone; without a price, currency amounts are hidden.
-      network.data ? { network: network.data, price: price.data?.prices[state.currency] ?? null } : null,
-    [network.data, price.data, state.currency],
+      network.data
+        ? { network: network.data, price: price.data?.prices[state.currency] ?? null, titan: titan.data }
+        : null,
+    [network.data, price.data, titan.data, state.currency],
   );
 
   // Example costs follow the currency (40 USD ≈ 670,000 IDR); costs the visitor typed are kept.

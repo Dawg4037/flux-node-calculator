@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { LookupResponse, NetworkResponse, PriceResponse } from "../../shared/api.ts";
+import type { LookupResponse, NetworkResponse, PriceResponse, TitanResponse } from "../../shared/api.ts";
 
 /** A failed API call. The page shows its own translated message based on `status`. */
 export class ApiError extends Error {
@@ -52,6 +52,8 @@ function usePolled<T>(url: string, intervalMs: number) {
 
 export const useNetwork = () => usePolled<NetworkResponse>("/api/network", 60_000);
 export const usePrice = () => usePolled<PriceResponse>("/api/price", 5 * 60_000);
+// The server refreshes Titan once a day; checking a few times a day is plenty.
+export const useTitan = () => usePolled<TitanResponse>("/api/titan", 6 * 60 * 60_000);
 
 export const lookupAddress = (address: string) =>
   getJson<LookupResponse>(`/api/lookup/${encodeURIComponent(address)}`);

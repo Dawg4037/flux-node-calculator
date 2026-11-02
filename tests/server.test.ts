@@ -15,6 +15,8 @@ const config: Config = {
   coingeckoBaseUrl: "https://cg.test/api/v3",
   explorerUrls: ["https://ex1.test", "https://ex2.test"],
   frankfurterBaseUrl: "https://fx.test",
+  titanBaseUrl: "https://titan.test",
+  titanRefreshMs: 86_400_000,
   priceRefreshMs: 1_200_000,
   networkRefreshMs: 90_000,
   fluxMaxConcurrency: 2,
@@ -52,6 +54,7 @@ interface MockState {
   ex2Status?: number;
   fxStatus?: number;
   failLists?: boolean;
+  titanStatus?: number;
   calls: string[];
   fluxStatus: "success" | "error";
   cgHeaders: Record<string, string> | null;
@@ -76,6 +79,30 @@ function mockFetch(state: MockState): typeof fetch {
       state.cgHeaders = (init?.headers as Record<string, string>) ?? null;
       if (state.cgStatus && state.cgStatus !== 200) return json({ error: "nope" }, state.cgStatus);
       return json({ zelcash: { usd: 0.066058, eur: 0.058971, gbp: 0.04939125, cad: 0.092498, idr: 1107.42, last_updated_at: 1792801600 } });
+    }
+    if (url.startsWith("https://titan.test")) {
+      if (state.titanStatus && state.titanStatus !== 200) return json({ error: "nope" }, state.titanStatus);
+      if (url.endsWith("/config"))
+        return json({
+          fundingAddress: "t3secret",
+          lockups: [
+            { name: "12 Months", fee: 30, blocks: 262800, time: 31536000 },
+            { name: "3 Months", fee: 50, blocks: 65700, time: 7884000 },
+            { name: "6 Months", fee: 40, blocks: 131400, time: 15768000 },
+          ],
+          minStake: 50,
+          maxStake: 100000,
+          stakeDisabled: false,
+          maintenanceMode: false,
+          readOnly: false,
+        });
+      if (url.endsWith("/stats")) return json({ total: 9_518_587.9, capacity: 9_520_000, available: 1412.1 });
+      if (url.endsWith("/nodes"))
+        return json([
+          { uuid: "A", address: "65.108.35.60", collateral: 40000 },
+          { uuid: "B", address: "65.108.35.61", collateral: 40000 },
+          { uuid: "C", address: "65.108.35.62", collateral: 12500 },
+        ]);
     }
     const ok = (data: unknown) => json({ status: state.fluxStatus, data });
     const path = url.replace("https://flux.test", "");
@@ -339,5 +366,37 @@ describe("unknown routes", () => {
     const res = await app.inject("/api/nope");
     expect(res.statusCode).toBe(404);
     expect(res.json()).toEqual({ error: "Not found" });
+  });
+});
+
+describe("GET /api/titan", () => {
+  it("serves Titan's lockups, tiers and capacity without addresses or IPs", async () => {
+    const built = await setup();
+    await built.titan.refresh();
+    const res = await built.app.inject("/api/titan");
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.lockups).toEqual([
+      { months: 3, feePct: 50 },
+      { months: 6, feePct: 40 },
+      { months: 12, feePct: 30 },
+    ]);
+    expect(body.nodes).toEqual({ cumulus: 0, nimbus: 1, stratus: 2 });
+    expect(body.available).toBeCloseTo(1412.1);
+    expect(body.open).toBe(true);
+    expect(body.stale).toBe(false);
+    expect(res.body).not.toMatch(/t3secret|65\.108/);
+  });
+
+  it("falls back to built-in defaults when Titan is unreachable", async () => {
+    const built = await setup({ titanStatus: 500 });
+    await built.titan.refresh();
+    const body = (await built.app.inject("/api/titan")).json();
+    expect(body.updatedAt).toBeNull();
+    expect(body.stale).toBe(true);
+    expect(body.lockups).toHaveLength(3);
+    const health = (await built.app.inject("/api/health")).json();
+    expect(health.titan.live).toBe(false);
+    expect(health.titan.lastError).toBe("HTTP 500");
   });
 });

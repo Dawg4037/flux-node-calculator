@@ -101,6 +101,30 @@ export interface LookupResponse {
   updatedAt: string;
 }
 
+export interface TitanLockup {
+  months: number;
+  /** Titan's share of rewards, in %. */
+  feePct: number;
+}
+
+/** Titan shared-node staking, refreshed daily from api.titan.runonflux.io. */
+export interface TitanResponse {
+  lockups: TitanLockup[];
+  /** Titan's nodes per tier. */
+  nodes: PerTier<number>;
+  minStake: number;
+  maxStake: number;
+  /** FLUX Titan's nodes can hold, how much is staked, and how much room is left. */
+  capacity: number;
+  staked: number;
+  available: number;
+  /** False while Titan isn't accepting new stakes (full, maintenance or read-only). */
+  open: boolean;
+  /** When the data was fetched (ISO 8601), or null when built-in defaults are in use. */
+  updatedAt: string | null;
+  stale: boolean;
+}
+
 export interface ApiError {
   error: string;
 }

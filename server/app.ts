@@ -9,6 +9,7 @@ import { FLUX_ADDRESS_RE } from "../shared/rewards.ts";
 import type { Config } from "./config.ts";
 import { FluxClient } from "./flux.ts";
 import { PriceClient } from "./price.ts";
+import { TitanClient } from "./titan.ts";
 import { UpstreamError, type FetchFn } from "./upstream.ts";
 
 export interface AppDeps {
@@ -47,6 +48,8 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
     fetchFn,
     app.log,
   );
+
+  const titan = new TitanClient(config.titanBaseUrl, fetchFn, app.log);
 
   if (!config.coingeckoApiKey) app.log.warn("COINGECKO_API_KEY is not set; the CoinGecko fallback will use the keyless endpoint");
 
@@ -97,6 +100,7 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
       network: flux.getNetwork() !== null,
       price: price.getPrice() !== null,
       priceSource: price.status(),
+      titan: titan.status(),
     };
   });
 
@@ -112,6 +116,11 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
     if (!p) return reply.code(503).header("retry-after", "30").send({ error: "Price data is loading, try again shortly." });
     reply.header("cache-control", "public, max-age=60");
     return p;
+  });
+
+  app.get("/api/titan", apiLimit, async (_req, reply) => {
+    reply.header("cache-control", "public, max-age=600");
+    return titan.get();
   });
 
   app.get<{ Params: { address: string } }>(
@@ -197,6 +206,7 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
   // ------------------------------------------------------- background tasks
   const timers: NodeJS.Timeout[] = [];
   let priceTimer: NodeJS.Timeout | undefined;
+  let titanTimer: NodeJS.Timeout | undefined;
   let closing = false;
   if (background) {
     void flux.refreshNetwork();
@@ -210,14 +220,22 @@ export async function buildApp({ config, fetchFn = fetch, background = true, log
       priceTimer.unref();
     };
     void priceLoop();
+    const titanLoop = async () => {
+      await titan.refresh();
+      if (closing) return;
+      titanTimer = setTimeout(() => void titanLoop(), titan.nextDelayMs(config.titanRefreshMs));
+      titanTimer.unref();
+    };
+    void titanLoop();
   }
   app.addHook("onClose", async () => {
     closing = true;
     timers.forEach(clearInterval);
     clearTimeout(priceTimer);
+    clearTimeout(titanTimer);
   });
 
-  return { app, flux, price };
+  return { app, flux, price, titan };
 }
 
 /**

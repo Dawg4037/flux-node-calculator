@@ -1,8 +1,8 @@
-import { TIERS, TIER_LABEL, collateralFlux } from "../../../shared/rewards.ts";
+import { TIERS, TIER_LABEL, titanAprPct, titanSiteApyPct } from "../../../shared/rewards.ts";
 import type { Currency } from "../../../shared/api.ts";
 import { fmtFlux, fmtInt, fmtMoney, fmtMonths, fmtPct } from "../format.ts";
 import { useT } from "../i18n/index.tsx";
-import { hasNodes, runProjection, type Market } from "../model.ts";
+import { hasHoldings, hasNodes, runProjection, titanLockupFor, type Market } from "../model.ts";
 import type { AppState, Setup } from "../state.ts";
 import { ParallelAssetsNote, ParallelAssetsSettings } from "./ParallelAssets.tsx";
 import { Notice, NumberField, TierSwatch, Toggle } from "./ui.tsx";
@@ -13,14 +13,75 @@ interface Props {
   market: Market;
 }
 
+const TITAN_URL = "https://titan.runonflux.io/";
+
+function TitanInputs({ setup, onChange, market }: { setup: Setup; onChange: (s: Setup) => void; market: Market }) {
+  const t = useT().earnings.titan;
+  const titan = market.titan;
+  if (!titan) return null;
+  const lockup = titanLockupFor(setup, titan);
+  const { height, nodes } = market.network;
+  const ours = lockup ? titanAprPct(lockup.feePct, titan.nodes, height, nodes) : 0;
+  const site = lockup ? titanSiteApyPct(lockup.feePct, titan.nodes, height, nodes) : 0;
+  const staked = setup.titan > 0;
+  return (
+    <fieldset className="space-y-3">
+      <legend className="mb-1 text-sm font-medium">{t.title}</legend>
+      <p className="text-xs text-muted">{t.intro}</p>
+      <div className="grid grid-cols-1 gap-3">
+        <NumberField
+          label={t.amount}
+          suffix="FLUX"
+          step={50}
+          max={10_000_000}
+          value={setup.titan}
+          onChange={(n) => onChange({ ...setup, titan: n })}
+        />
+        <label className="block text-sm text-muted">
+          {t.lockup}
+          <select
+            value={lockup?.months ?? setup.titanMonths}
+            onChange={(e) => onChange({ ...setup, titanMonths: Number(e.target.value) })}
+            className="mt-1 w-full rounded-md border border-line bg-field px-3 py-2 text-ink"
+          >
+            {titan.lockups.map((l) => (
+              <option key={l.months} value={l.months}>
+                {t.lockOption(l.months, l.feePct)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {lockup && (
+        <div className="space-y-1 text-xs text-muted">
+          <p className="text-sm text-ink">{t.rate(fmtPct(ours), lockup.feePct)}</p>
+          <p>{t.site(fmtPct(site))}</p>
+          {staked && <p>{t.notes}</p>}
+          {staked && setup.titan < titan.minStake && <p className="text-loss">{t.min(fmtInt(titan.minStake))}</p>}
+          {staked && setup.titan > titan.maxStake && <p className="text-loss">{t.max(fmtInt(titan.maxStake))}</p>}
+          {staked && !titan.open && <p className="text-loss">{t.closed(fmtInt(titan.available))}</p>}
+          {titan.updatedAt === null && <p>{t.defaults}</p>}
+          <p>
+            <a className="underline" href={TITAN_URL} rel="noopener noreferrer" target="_blank">
+              {t.link}
+            </a>
+          </p>
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
 function SetupInputs({
   setup,
   onChange,
   currency,
+  market,
 }: {
   setup: Setup;
   onChange: (s: Setup) => void;
   currency: Currency;
+  market: Market;
 }) {
   const sym = currency.toUpperCase();
   const t = useT().earnings;
@@ -51,6 +112,7 @@ function SetupInputs({
             />
           </fieldset>
         ))}
+      <TitanInputs setup={setup} onChange={onChange} market={market} />
       <NumberField
         label={t.setupCost}
         suffix={sym}
@@ -78,7 +140,7 @@ function Results({
   const all = useT();
   const t = all.earnings;
   const c = state.currency;
-  if (!hasNodes(setup)) return <Notice>{t.addNode}</Notice>;
+  if (!hasHoldings(setup)) return <Notice>{t.addNode}</Notice>;
   // Without today's price, FLUX amounts still work; currency amounts show a dash.
   const priced = market.price !== null;
   const money = (v: number) => (priced ? fmtMoney(v, c) : "—");
@@ -89,7 +151,7 @@ function Results({
   const year1Flux = year1.reduce((s, m) => s + m.fluxTotal, 0);
   const year1Pa = year1.reduce((s, m) => s + m.paFlux, 0);
   const year1Net = year1.reduce((s, m) => s + m.net, 0);
-  const coll = collateralFlux(setup.nodes);
+  const coll = flat.collateralFlux;
   // Reward rate counts parallel assets at their relative value.
   const rate = ((year1Flux + year1Pa * (state.pa ? state.paValue / 100 : 0)) / coll) * 100;
   const net = m1.net;
@@ -127,7 +189,7 @@ function Results({
           <dd className={`num text-xl font-semibold ${!priced ? "" : net >= 0 ? "text-gain" : "text-loss"}`}>{money(net)}</dd>
         </div>
         <div>
-          <dt className="text-sm text-muted">{t.collateralLocked}</dt>
+          <dt className="text-sm text-muted">{setup.titan > 0 ? t.lockedWithTitan : t.collateralLocked}</dt>
           <dd className="num text-xl">{fmtInt(coll)} FLUX</dd>
         </div>
         <div>
@@ -160,7 +222,7 @@ function Results({
               : t.notWithin20}
         </p>
         <p className="mt-1 text-sm text-muted">
-          {t.recovering(fmtMoney(flat.capital, c), state.includeCollateral, state.pa)}
+          {t.recovering(fmtMoney(flat.capital, c), state.includeCollateral, state.pa && hasNodes(setup))}
         </p>
       </div>
       )}
@@ -177,7 +239,7 @@ export function EarningsTab({ state, update, market }: Props) {
         <p className="text-sm text-muted">
           {t.intro}
         </p>
-        <SetupInputs setup={state.a} onChange={(a) => update({ a })} currency={c} />
+        <SetupInputs setup={state.a} onChange={(a) => update({ a })} currency={c} market={market} />
         <div className="space-y-4 border-t border-line pt-5">
           <NumberField
             label={t.collateralPrice}
@@ -215,7 +277,7 @@ export function EarningsTab({ state, update, market }: Props) {
         {state.compare && (
           <div className="border-t border-line pt-5">
             <h3 className="mb-3 text-lg font-semibold">{t.setupB}</h3>
-            <SetupInputs setup={state.b} onChange={(b) => update({ b })} currency={c} />
+            <SetupInputs setup={state.b} onChange={(b) => update({ b })} currency={c} market={market} />
           </div>
         )}
       </div>
@@ -231,7 +293,7 @@ export function EarningsTab({ state, update, market }: Props) {
         />
         {state.compare && <Results state={state} setup={state.b} market={market} title={t.setupB} compact />}
       </div>
-      <ParallelAssetsNote state={state} />
+      {(hasNodes(state.a) || (state.compare && hasNodes(state.b))) && <ParallelAssetsNote state={state} />}
       </div>
     </div>
   );

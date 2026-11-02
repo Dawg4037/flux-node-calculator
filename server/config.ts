@@ -53,6 +53,8 @@ export interface Config {
   /** Flux explorers for the FLUX/USD price, tried in order. */
   explorerUrls: string[];
   frankfurterBaseUrl: string;
+  titanBaseUrl: string;
+  titanRefreshMs: number;
   priceRefreshMs: number;
   networkRefreshMs: number;
   fluxMaxConcurrency: number;
@@ -72,6 +74,8 @@ export function loadConfig(): Config {
     coingeckoBaseUrl: url("COINGECKO_BASE_URL", "https://api.coingecko.com/api/v3"),
     explorerUrls: urlList("EXPLORER_URLS", ["https://explorer.runonflux.io", "https://explorer.app.runonflux.io"]),
     frankfurterBaseUrl: url("FRANKFURTER_BASE_URL", "https://api.frankfurter.dev"),
+    titanBaseUrl: url("TITAN_BASE_URL", "https://api.titan.runonflux.io"),
+    titanRefreshMs: num("TITAN_REFRESH_HOURS", 24, 1, 168) * 3_600_000,
     // Never faster than every 5 minutes, to protect the free-tier quota.
     priceRefreshMs: num("PRICE_REFRESH_MINUTES", 20, 5, 1440) * 60_000,
     networkRefreshMs: num("NETWORK_REFRESH_SECONDS", 90, 30, 3600) * 1000,

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  titanAprPct,
+  titanSiteApyPct,
   BLOCKS_PER_MONTH,
   FLUX_ADDRESS_RE,
   dailyFluxPerNode,
@@ -227,5 +229,46 @@ describe("parallel asset end", () => {
     const est = parallelAssetEndHeight("2027-07-02", 3_075_000, now);
     expect(Math.abs(est - DEFAULT_PARALLEL_ASSET_END_HEIGHT)).toBeLessThan(2880 * 7);
     expect(parallelAssetEndHeight("2027-01-01", 3_075_000, now)).toBeLessThan(DEFAULT_PARALLEL_ASSET_END_HEIGHT);
+  });
+});
+
+describe("Titan stakes", () => {
+  const net = { cumulus: 3333, nimbus: 1663, stratus: 1836 };
+  const pool = { cumulus: 0, nimbus: 0, stratus: 238 };
+  const h = 3_092_174;
+
+  it("earns Titan's pool rate after the fee, including reward cuts", () => {
+    // An all-Stratus pool earns what a Stratus node earns per FLUX of collateral, minus the fee.
+    expect(titanAprPct(30, pool, h, net)).toBeCloseTo(fluxAprPct("stratus", h, net.stratus) * 0.7, 6);
+    expect(titanAprPct(50, pool, h, net)).toBeLessThan(titanAprPct(30, pool, h, net));
+  });
+
+  it("matches the estimate Titan's own site shows (monthly compounding, no cut)", () => {
+    const yearly = ((30 * 2880 * tierBlockReward("stratus", h) * 0.7) / net.stratus / 40_000) * 12;
+    expect(titanSiteApyPct(30, pool, h, net)).toBeCloseTo((Math.pow(1 + yearly / 12, 12) - 1) * 100, 8);
+  });
+
+  it("adds Titan rewards and the stake to projections, without parallel assets", () => {
+    const base = {
+      startHeight: h,
+      months: 12,
+      yourNodes: { cumulus: 0, nimbus: 0, stratus: 0 },
+      networkNodes: net,
+      networkGrowthPctPerYear: 0,
+      startPrice: 1,
+      priceChangePctPerYear: 0,
+      monthlyCostPerNode: { cumulus: 10, nimbus: 20, stratus: 40 },
+      upfrontCost: 0,
+      collateralPrice: 1,
+      includeCollateralInBreakEven: true,
+      parallelAssets: { count: 10, valuePct: 100, endHeight: h + 10_000_000 },
+      titan: { flux: 10_000, feePct: 30, nodes: pool },
+    };
+    const r = project(base);
+    expect(r.collateralFlux).toBe(10_000);
+    expect(r.capital).toBe(10_000);
+    expect(r.totalPaFlux).toBe(0);
+    expect(r.months[0]!.cost).toBe(0);
+    expect(r.totalFlux).toBeCloseTo(titanAprPct(30, pool, h, net) * 100, 6);
   });
 });

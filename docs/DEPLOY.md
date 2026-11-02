@@ -37,6 +37,7 @@ The app stores nothing on disk and uses ~100 MB of memory, so these minimums are
 |---|---|---|
 | `COINGECKO_API_KEY` | *(your Demo key)* | Optional. Only used when the Flux explorer price is unavailable. Server-side only |
 | `PRICE_REFRESH_MINUTES` | `20` | How often the price is refreshed |
+| `TITAN_REFRESH_HOURS` | `24` | How often Titan's fees, node list and capacity are refreshed (1–168) |
 
 Names are case-sensitive: `coingecko_api_key` is not read.
 
@@ -50,6 +51,7 @@ Review the price, sign in Zelcore, and pay.
 
 - `https://<app>.app.runonflux.io/api/health` → `"network":true` and `"price":true` within a minute of starting, plus the `version` that instance runs.
   `priceSource.source` shows where the price came from (`Flux explorer` or `CoinGecko`), and `priceSource.errors` the last error from each source. If `price` is false, `priceSource.lastError` says why (e.g. `explorer: HTTP 503; coingecko: timeout`), and `priceSource.keySet` shows whether `COINGECKO_API_KEY` reached the container. After a failed price refresh the server retries in 2, 4, 8 and 16 minutes, then every 20.
+  `titan.live` shows whether Titan's data (api.titan.runonflux.io) has loaded; until it does, built-in fees are used and the calculator says so. `titan.lastError` says why a refresh failed; retries come after 15, 30 and 60 minutes, then daily.
 - In the logs, `chain block reward differs from schedule` means the chain's reward no longer matches the coded schedule.
 
 ## Releasing an update

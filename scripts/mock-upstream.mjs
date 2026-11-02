@@ -73,6 +73,18 @@ createServer((req, res) => {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify(body));
   };
+  if (url.pathname === "/titan/config")
+    return send({
+      lockups: [
+        { name: "3 Months", fee: 50, blocks: 65700, time: 7884000 },
+        { name: "6 Months", fee: 40, blocks: 131400, time: 15768000 },
+        { name: "12 Months", fee: 30, blocks: 262800, time: 31536000 },
+      ],
+      minStake: 50,
+      maxStake: 100000,
+    });
+  if (url.pathname === "/titan/stats") return send({ total: 9518587.9, capacity: 9520000, available: 1412.1 });
+  if (url.pathname === "/titan/nodes") return send(Array.from({ length: 238 }, (_, i) => ({ uuid: `T${i}`, collateral: 40000 })));
   if (url.pathname === "/explorer/api/currency") return send({ status: 200, data: { rate: 0.0681, short: "FLUX" } });
   if (url.pathname === "/fx/v1/latest") {
     return send({ amount: 1, base: "USD", date: "2026-10-28", rates: { CAD: 1.4047, EUR: 0.89823, GBP: 0.75258, IDR: 18177 } });

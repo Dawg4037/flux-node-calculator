@@ -169,6 +169,8 @@ export interface ProjectionInput {
   includeCollateralInBreakEven: boolean;
   /** Parallel-asset rewards to add on top of native FLUX; omit to exclude them. */
   parallelAssets?: ParallelAssets;
+  /** FLUX staked in Titan shared nodes; omit for none. */
+  titan?: TitanStake;
 }
 
 export interface ProjectionMonth {
@@ -176,7 +178,9 @@ export interface ProjectionMonth {
   startHeight: number;
   /** Native FLUX per tier. */
   flux: PerTier<number>;
-  /** Native FLUX, all tiers. */
+  /** Native FLUX from Titan, after Titan's fee. */
+  titanFlux: number;
+  /** Native FLUX, all tiers plus Titan. */
   fluxTotal: number;
   /** Parallel-asset rewards, in FLUX-equivalent tokens (before applying their relative value). */
   paFlux: number;
@@ -225,7 +229,8 @@ export function project(input: ProjectionInput): ProjectionResult {
     stratus: Math.max(0, Math.floor(input.yourNodes.stratus)),
   };
 
-  const collFlux = collateralFlux(yours);
+  const titanStake = Math.max(0, input.titan?.flux ?? 0);
+  const collFlux = collateralFlux(yours) + titanStake;
   const capital =
     Math.max(0, input.upfrontCost || 0) +
     (input.includeCollateralInBreakEven ? collFlux * Math.max(0, input.collateralPrice || 0) : 0);
@@ -257,10 +262,14 @@ export function project(input: ProjectionInput): ProjectionResult {
       flux[t] = (tierPayout * yours[t]) / network;
     }
 
-    const fluxTotal = flux.cumulus + flux.nimbus + flux.stratus;
-    // Share of this month's blocks before parallel assets end.
+    const nodeFlux = flux.cumulus + flux.nimbus + flux.stratus;
+    const titanFlux = input.titan
+      ? titanFluxForRange(input.titan, startHeight, BLOCKS_PER_MONTH, (t) => input.networkNodes[t] * Math.pow(1 + growth, yearsMid))
+      : 0;
+    const fluxTotal = nodeFlux + titanFlux;
+    // Share of this month's blocks before parallel assets end. Titan stakes don't earn them.
     const paActive = paMultiplier > 0 ? clamp((paEnd - startHeight) / BLOCKS_PER_MONTH, 0, 1) : 0;
-    const paFlux = fluxTotal * paMultiplier * paActive;
+    const paFlux = nodeFlux * paMultiplier * paActive;
     const price = startPrice * Math.pow(1 + priceChange, yearsMid);
     const revenue = (fluxTotal + paFlux * paValue) * price;
     const net = revenue - monthlyCost;
@@ -273,6 +282,7 @@ export function project(input: ProjectionInput): ProjectionResult {
       month: m + 1,
       startHeight,
       flux,
+      titanFlux,
       fluxTotal,
       paFlux,
       price,
@@ -296,6 +306,68 @@ export function project(input: ProjectionInput): ProjectionResult {
     totalPaFlux: cumulativePaFlux,
     totalNet: cumulativeNet,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Titan shared nodes
+// ---------------------------------------------------------------------------
+
+/**
+ * Titan (titan.runonflux.io): Flux-run shared nodes anyone can stake into. Stakers share the
+ * rewards of Titan's nodes in proportion to their stake, minus Titan's fee for the chosen lockup.
+ * Titan stakers earn native FLUX only, no parallel assets.
+ */
+export interface TitanStake {
+  /** FLUX staked. */
+  flux: number;
+  /** Titan's share of rewards for the lockup, in %. */
+  feePct: number;
+  /** Titan's nodes per tier. */
+  nodes: PerTier<number>;
+}
+
+/**
+ * FLUX a Titan stake earns over `blocks` blocks, after the fee and honouring reward cuts:
+ * Titan's total node rewards × (stake ÷ Titan's total collateral).
+ */
+export function titanFluxForRange(
+  stake: TitanStake,
+  fromHeight: number,
+  blocks: number,
+  networkAt: (t: Tier) => number,
+): number {
+  const pool = collateralFlux(stake.nodes);
+  if (!(pool > 0) || !(stake.flux > 0)) return 0;
+  let poolFlux = 0;
+  for (const t of TIERS) {
+    const n = Math.max(0, stake.nodes[t]);
+    if (n === 0) continue;
+    poolFlux += (tierPayoutForRange(t, fromHeight, blocks) * n) / Math.max(networkAt(t), n);
+  }
+  return poolFlux * (stake.flux / pool) * (1 - clamp(stake.feePct, 0, 100) / 100);
+}
+
+/** Titan's yearly rate over the next 12 months, after the fee and including reward cuts (not compounded). */
+export function titanAprPct(feePct: number, nodes: PerTier<number>, height: number, networkNodes: PerTier<number>): number {
+  return titanFluxForRange({ flux: 100, feePct, nodes }, height, BLOCKS_PER_YEAR, (t) => networkNodes[t]);
+}
+
+/**
+ * Titan's own estimate, as titan.runonflux.io shows it: today's reward rate after the fee,
+ * compounded monthly, ignoring reward cuts; averaged over Titan's nodes.
+ */
+export function titanSiteApyPct(feePct: number, nodes: PerTier<number>, height: number, networkNodes: PerTier<number>): number {
+  let sum = 0;
+  let count = 0;
+  for (const t of TIERS) {
+    const n = Math.max(0, nodes[t]);
+    if (n === 0 || !(networkNodes[t] > 0)) continue;
+    const yearly =
+      ((30 * BLOCKS_PER_DAY * tierBlockReward(t, height) * (1 - clamp(feePct, 0, 100) / 100)) / networkNodes[t] / COLLATERAL[t]) * 12;
+    sum += (Math.pow(1 + yearly / 12, 12) - 1) * n;
+    count += n;
+  }
+  return count > 0 ? (sum / count) * 100 : 0;
 }
 
 /** First-year FLUX earned as a % of locked collateral (reward rate in FLUX terms). */

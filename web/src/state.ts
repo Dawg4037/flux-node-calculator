@@ -19,6 +19,10 @@ export interface Setup {
   cost: PerTier<number>;
   /** One-time setup cost. */
   upfront: number;
+  /** FLUX staked in Titan shared nodes (0 = none). */
+  titan: number;
+  /** Titan lockup length in months. */
+  titanMonths: number;
 }
 
 export interface AppState {
@@ -56,9 +60,9 @@ export interface AppState {
 export const DEFAULT_STATE: AppState = {
   tab: "earnings",
   currency: "usd",
-  a: { nodes: { cumulus: 0, nimbus: 0, stratus: 1 }, cost: { cumulus: 10, nimbus: 20, stratus: 40 }, upfront: 0 },
+  a: { nodes: { cumulus: 0, nimbus: 0, stratus: 1 }, cost: { cumulus: 10, nimbus: 20, stratus: 40 }, upfront: 0, titan: 0, titanMonths: 12 },
   compare: false,
-  b: { nodes: { cumulus: 0, nimbus: 3, stratus: 0 }, cost: { cumulus: 10, nimbus: 20, stratus: 40 }, upfront: 0 },
+  b: { nodes: { cumulus: 0, nimbus: 3, stratus: 0 }, cost: { cumulus: 10, nimbus: 20, stratus: 40 }, upfront: 0, titan: 0, titanMonths: 12 },
   collateralPrice: null,
   includeCollateral: true,
   years: 5,
@@ -126,7 +130,13 @@ function readSetup(p: URLSearchParams, prefix: string, fallback: Setup): Setup {
     nodes[t] = readNum(p, `${prefix}${TIER_KEY[t]}`, fallback.nodes[t], 0, 10_000, true);
     cost[t] = readNum(p, `${prefix}${TIER_KEY[t]}h`, fallback.cost[t], 0, 1e9);
   }
-  return { nodes, cost, upfront: readNum(p, `${prefix}up`, fallback.upfront, 0, 1e9) };
+  return {
+    nodes,
+    cost,
+    upfront: readNum(p, `${prefix}up`, fallback.upfront, 0, 1e9),
+    titan: readNum(p, `${prefix}t`, fallback.titan, 0, 1e7),
+    titanMonths: readNum(p, `${prefix}tm`, fallback.titanMonths, 1, 60, true),
+  };
 }
 
 function writeSetup(p: URLSearchParams, prefix: string, s: Setup) {
@@ -135,6 +145,10 @@ function writeSetup(p: URLSearchParams, prefix: string, s: Setup) {
     p.set(`${prefix}${TIER_KEY[t]}h`, String(s.cost[t]));
   }
   if (s.upfront) p.set(`${prefix}up`, String(s.upfront));
+  if (s.titan) {
+    p.set(`${prefix}t`, String(s.titan));
+    p.set(`${prefix}tm`, String(s.titanMonths));
+  }
 }
 
 export function parseState(search: string): AppState {
